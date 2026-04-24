@@ -84,6 +84,56 @@ function pushMapped(
 }
 
 // ---------------------------------------------------------------------------
+// <script setup> — import hoisting
+// ---------------------------------------------------------------------------
+
+interface SetupLine {
+  text: string;
+  srcLine: number;
+}
+
+/**
+ * Split `<script setup>` content into:
+ *  - `imports`  — static import statements, hoisted to module level
+ *  - `body`     — everything else, placed inside the component function
+ *
+ * Handles multi-line imports by tracking open `{` depth.
+ */
+function splitSetupContent(
+  content: string,
+  startLine: number,
+): { imports: SetupLine[]; body: SetupLine[] } {
+  const lines = content.split("\n");
+  const imports: SetupLine[] = [];
+  const body: SetupLine[] = [];
+  let inImport = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const text = lines[i] ?? "";
+    const srcLine = startLine + i;
+    const trimmed = text.trimStart();
+
+    if (!inImport && /^import[\s{*"'`]/.test(trimmed) && !/^import\s*\(/.test(trimmed)) {
+      inImport = true;
+      imports.push({ text, srcLine });
+      // Complete on the same line when it already has  from '...'  or is a bare side-effect import
+      if (/from\s+['"`]|^import\s+['"`]/.test(trimmed)) {
+        inImport = false;
+      }
+    } else if (inImport) {
+      imports.push({ text, srcLine });
+      if (/from\s+['"`]/.test(text)) {
+        inImport = false;
+      }
+    } else {
+      body.push({ text, srcLine });
+    }
+  }
+
+  return { imports, body };
+}
+
+// ---------------------------------------------------------------------------
 // Scope id helpers — <style scoped> support
 // ---------------------------------------------------------------------------
 
@@ -177,6 +227,9 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
   const hasScoped = descriptor.styles.some((s) => "scoped" in s.attrs);
   const scopeId = hasScoped ? `data-v-${fnv1a32(descriptor.filename)}` : null;
 
+  // Whether the component uses <script setup> (affects code layout).
+  const hasSetup = descriptor.scriptSetup !== null;
+
   // -- JSX scope factory (must come before any JSX) -------------------------
   // Pragma comments switch esbuild from the automatic runtime to a custom
   // factory (__h) that stamps every native DOM element with the scope attribute.
@@ -199,7 +252,18 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
     pushBoilerplate(b, `import "${id}";`);
   }
 
-  // -- <script> block -------------------------------------------------------
+  // -- <script setup>: hoist import statements to module level --------------
+  let setupBody: SetupLine[] = [];
+  if (descriptor.scriptSetup !== null) {
+    const { content, loc } = descriptor.scriptSetup;
+    const { imports, body } = splitSetupContent(content, loc.start.line);
+    for (const { text, srcLine } of imports) {
+      pushMapped(b, text, srcLine, 0);
+    }
+    setupBody = body;
+  }
+
+  // -- <script> block (module level, unchanged) -----------------------------
   if (descriptor.script !== null) {
     const { content, loc } = descriptor.script;
     const contentLines = content.split("\n");
@@ -209,8 +273,9 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
     }
   }
 
-  // -- <clientScript> block -------------------------------------------------
-  if (descriptor.clientScript !== null) {
+  // -- When there is no <script setup>, emit clientScript at module level ---
+  // (legacy behaviour: client-only side-effect code runs when the module loads)
+  if (!hasSetup && descriptor.clientScript !== null) {
     const { content, loc } = descriptor.clientScript;
     const contentLines = content.split("\n");
     for (let i = 0; i < contentLines.length; i++) {
@@ -219,17 +284,38 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
     }
   }
 
-  // -- <template> block → default export ------------------------------------
-  if (descriptor.template !== null) {
-    const { content, loc } = descriptor.template;
+  // -- Component function ---------------------------------------------------
+  // With <script setup>: wrap setup body + clientScript + template together.
+  // Without <script setup>: only wrap template (current behaviour).
+  if (hasSetup || descriptor.template !== null) {
     pushBoilerplate(b, "export default function __RsfcComponent__() {");
-    pushBoilerplate(b, "  return (");
-    const templateLines = content.split("\n");
-    for (let i = 0; i < templateLines.length; i++) {
-      const line = templateLines[i] ?? "";
-      pushMapped(b, "    " + line, loc.start.line + i, 0);
+
+    // Setup body (non-import declarations, hooks, etc.)
+    for (const { text, srcLine } of setupBody) {
+      pushMapped(b, "  " + text, srcLine, 0);
     }
-    pushBoilerplate(b, "  );");
+
+    // clientScript inside the function when setup is present
+    if (hasSetup && descriptor.clientScript !== null) {
+      const { content, loc } = descriptor.clientScript;
+      const contentLines = content.split("\n");
+      for (let i = 0; i < contentLines.length; i++) {
+        const line = contentLines[i] ?? "";
+        pushMapped(b, "  " + line, loc.start.line + i, 0);
+      }
+    }
+
+    if (descriptor.template !== null) {
+      const { content, loc } = descriptor.template;
+      pushBoilerplate(b, "  return (");
+      const templateLines = content.split("\n");
+      for (let i = 0; i < templateLines.length; i++) {
+        const line = templateLines[i] ?? "";
+        pushMapped(b, "    " + line, loc.start.line + i, 0);
+      }
+      pushBoilerplate(b, "  );");
+    }
+
     pushBoilerplate(b, "}");
   }
 

@@ -1,13 +1,17 @@
-<script lang="ts">
-export const framework = "Next.js"
-export const reactVersion = "19"
-export const features: Array<{ id: number; name: string; done: boolean }> = [
+<script setup lang="ts">
+import { useState } from "react"
+
+const framework = "Next.js"
+const reactVersion = "19"
+const features: Array<{ id: number; name: string; done: boolean }> = [
   { id: 1, name: "Parser  (@rsfc/core)", done: true },
   { id: 2, name: "Generator + V3 source maps", done: true },
   { id: 3, name: "Vite plugin", done: true },
   { id: 4, name: "Webpack loader", done: true },
   { id: 5, name: "Playground integration", done: true },
+  { id: 6, name: "script setup", done: true },
 ]
+const [count, setCount] = useState(0)
 </script>
 
 <template>
@@ -24,6 +28,7 @@ export const features: Array<{ id: number; name: string; done: boolean }> = [
       </li>
     ))}
   </ul>
+  <p>useState counter: <button onClick={() => setCount(count + 1)}>{count}</button></p>
 </div>
 </template>
 

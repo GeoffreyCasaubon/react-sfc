@@ -60,7 +60,14 @@ export interface RsfcParseError {
 export interface RsfcDescriptor {
   filename: string;
   source: string;
+  /** <script> — module-level code (exports, loaders, etc.) */
   script: RsfcBlock | null;
+  /**
+   * <script setup> — component setup code.
+   * `import` statements are hoisted to module level; everything else is
+   * placed inside the component function before the template return.
+   */
+  scriptSetup: RsfcBlock | null;
   clientScript: RsfcBlock | null;
   template: RsfcBlock | null;
   /** Zero or more style blocks, in source order. */

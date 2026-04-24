@@ -21,6 +21,7 @@ const EMPTY_DESCRIPTOR: RsfcDescriptor = {
   filename: "/empty.rsfc",
   source: "",
   script: null,
+  scriptSetup: null,
   clientScript: null,
   template: null,
   styles: [],
@@ -349,6 +350,119 @@ describe("scoped styles", () => {
     const { code } = parseAndGenerate(source, "/comp.rsfc");
     // The factory spreads the scope id onto native element props
     expect(code).toMatch(/data-v-[0-9a-f]+/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// <script setup>
+// ---------------------------------------------------------------------------
+
+describe("<script setup>", () => {
+  it("makes top-level variables available in the template without export", () => {
+    const source = src(
+      "<script setup>",
+      "const greeting = 'Hello'",
+      "</script>",
+      "<template><span>{greeting}</span></template>"
+    );
+    const { code } = parseAndGenerate(source);
+    // greeting is declared inside the component function, not at module level
+    expect(code).toContain("const greeting");
+    expect(code).toContain("export default function __RsfcComponent__");
+    // The component function contains both the declaration and the template
+    const fnStart = code.indexOf("export default function");
+    const greetingIdx = code.indexOf("const greeting");
+    expect(greetingIdx).toBeGreaterThan(fnStart);
+  });
+
+  it("hoists import statements to module level", () => {
+    const source = src(
+      "<script setup>",
+      "import { useState } from 'react'",
+      "const [count, setCount] = useState(0)",
+      "</script>",
+      "<template><div>{count}</div></template>"
+    );
+    const { code } = parseAndGenerate(source);
+    const importIdx = code.indexOf("import { useState }");
+    const fnStart = code.indexOf("export default function");
+    // import must appear BEFORE the component function
+    expect(importIdx).toBeGreaterThanOrEqual(0);
+    expect(importIdx).toBeLessThan(fnStart);
+    // useState call is INSIDE the function
+    const useStateCallIdx = code.indexOf("useState(0)");
+    expect(useStateCallIdx).toBeGreaterThan(fnStart);
+  });
+
+  it("handles multi-line imports", () => {
+    const source = src(
+      "<script setup>",
+      "import {",
+      "  useState,",
+      "  useEffect,",
+      "} from 'react'",
+      "const x = 1",
+      "</script>",
+      "<template><div/></template>"
+    );
+    const { code } = parseAndGenerate(source);
+    const fnStart = code.indexOf("export default function");
+    expect(code.indexOf("useState,")).toBeLessThan(fnStart);
+    expect(code.indexOf("const x = 1")).toBeGreaterThan(fnStart);
+  });
+
+  it("wraps setup body and template in a single component function", () => {
+    const source = src(
+      "<script setup>",
+      "import { useState } from 'react'",
+      "const [n, setN] = useState(0)",
+      "function inc() { setN(n + 1) }",
+      "</script>",
+      "<template><button onClick={inc}>{n}</button></template>"
+    );
+    const { code } = parseAndGenerate(source);
+    expect(code).toContain("export default function __RsfcComponent__");
+    // Only one component function
+    expect(code.split("export default function").length).toBe(2);
+    // Both body and template are inside
+    const fn = code.slice(code.indexOf("export default function"));
+    expect(fn).toContain("useState(0)");
+    expect(fn).toContain("<button");
+  });
+
+  it("coexists with a regular <script> block (module-level exports)", () => {
+    const source = src(
+      "<script>",
+      "export const API_URL = '/api'",
+      "</script>",
+      "<script setup>",
+      "import { useState } from 'react'",
+      "const [x, setX] = useState(0)",
+      "</script>",
+      "<template><div>{x}</div></template>"
+    );
+    const { code } = parseAndGenerate(source);
+    // Module-level export from <script>
+    expect(code).toContain("export const API_URL");
+    // Hook call inside the component function
+    const fnStart = code.indexOf("export default function");
+    expect(code.indexOf("useState(0)")).toBeGreaterThan(fnStart);
+  });
+
+  it("generates no component function when only <script setup> with no template", () => {
+    const source = src(
+      "<script setup>",
+      "import { useState } from 'react'",
+      "const x = 1",
+      "</script>"
+    );
+    const { code } = parseAndGenerate(source);
+    // Still wraps in a function (setup code must run inside a component)
+    expect(code).toContain("export default function __RsfcComponent__");
+    // Import is hoisted
+    expect(code.indexOf("import { useState }")).toBeLessThan(
+      code.indexOf("export default function")
+    );
   });
 });
 

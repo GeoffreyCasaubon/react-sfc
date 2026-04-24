@@ -78,12 +78,31 @@ export default nextConfig;
 
 | Block | Required | Notes |
 |---|---|---|
-| `<script>` | no | Module-level code, exports, server logic |
-| `<clientScript>` | no | Client-only code (not SSR) |
+| `<script>` | no | Module-level code, exports, loaders |
+| `<script setup>` | no | Component setup — top-level vars available in template; `import` statements hoisted |
+| `<clientScript>` | no | Client-only side-effect code |
 | `<template>` | no | JSX, compiled to `export default function` |
-| `<style>` | no | Multiple blocks allowed; supports `lang="scss"` / `lang="sass"` |
+| `<style>` | no | Multiple blocks; `lang="scss"` / `lang="sass"`; `scoped` attribute |
 
-`<script>` and `<template>` accept `lang="ts"` for TypeScript.
+`<script>`, `<script setup>`, and `<template>` accept `lang="ts"` for TypeScript.
+
+### `<script setup>` example
+
+```html
+<script setup lang="ts">
+import { useState } from "react"
+
+const title = "Hello"          <!-- no export needed -->
+const [count, setCount] = useState(0)
+</script>
+
+<template>
+  <div>
+    <h1>{title}</h1>
+    <button onClick={() => setCount(count + 1)}>{count}</button>
+  </div>
+</template>
+```
 
 `<style scoped>` generates a unique `data-v-*` attribute and stamps every DOM element in the template and every CSS selector with it — styles stay component-local.
 

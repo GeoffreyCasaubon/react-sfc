@@ -374,3 +374,57 @@ describe("error cases", () => {
     ).not.toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+// <script setup>
+// ---------------------------------------------------------------------------
+
+describe("<script setup>", () => {
+  it("parses into scriptSetup, not script", () => {
+    const source = "<script setup>\nconst x = 1\n</script>";
+    const result = parse(source, { filename: "a.rsfc" });
+    expect(result.scriptSetup).not.toBeNull();
+    expect(result.script).toBeNull();
+    expect(result.scriptSetup?.content).toContain("const x = 1");
+  });
+
+  it("sets attrs.setup on the scriptSetup block", () => {
+    const source = "<script setup>\n</script>";
+    const result = parse(source, { filename: "a.rsfc" });
+    expect(result.scriptSetup?.attrs).toHaveProperty("setup");
+  });
+
+  it("supports lang attribute alongside setup", () => {
+    const source = '<script setup lang="ts">\nconst x: number = 1\n</script>';
+    const result = parse(source, { filename: "a.rsfc" });
+    expect(result.scriptSetup?.lang).toBe("ts");
+    expect(result.scriptSetup?.attrs).toHaveProperty("setup");
+  });
+
+  it("allows <script> and <script setup> to coexist", () => {
+    const source = src(
+      "<script>export const API_URL = '/api'</script>",
+      "<script setup>const x = 1</script>"
+    );
+    const result = parse(source, { filename: "a.rsfc" });
+    expect(result.script).not.toBeNull();
+    expect(result.scriptSetup).not.toBeNull();
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("reports an error for duplicate <script setup> and keeps the first", () => {
+    const source = src(
+      "<script setup>first</script>",
+      "<script setup>second</script>"
+    );
+    const result = parse(source, { filename: "a.rsfc" });
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]?.message).toMatch(/[Dd]uplicate.*script setup/i);
+    expect(result.scriptSetup?.content).toBe("first");
+  });
+
+  it("returns scriptSetup: null for files without <script setup>", () => {
+    const result = parse("<script>x</script>", { filename: "a.rsfc" });
+    expect(result.scriptSetup).toBeNull();
+  });
+});

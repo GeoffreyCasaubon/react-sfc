@@ -67,6 +67,7 @@ export function parse(
     filename: options.filename,
     source,
     script: null,
+    scriptSetup: null,
     clientScript: null,
     template: null,
     styles: [],
@@ -107,10 +108,19 @@ export function parse(
 
     switch (tagName) {
       case "script":
-        if (descriptor.script !== null) {
-          errors.push({ message: "Duplicate <script> block", loc });
+        if ("setup" in attrs) {
+          // <script setup> — component setup block
+          if (descriptor.scriptSetup !== null) {
+            errors.push({ message: "Duplicate <script setup> block", loc });
+          } else {
+            descriptor.scriptSetup = block;
+          }
         } else {
-          descriptor.script = block;
+          if (descriptor.script !== null) {
+            errors.push({ message: "Duplicate <script> block", loc });
+          } else {
+            descriptor.script = block;
+          }
         }
         break;
       case "clientScript":
