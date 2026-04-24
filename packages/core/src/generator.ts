@@ -209,6 +209,33 @@ function scopeSelectorList(list: string, attr: string): string {
     .join(",");
 }
 
+// ---------------------------------------------------------------------------
+// CSS Modules helpers
+// ---------------------------------------------------------------------------
+
+/** Collect all .className tokens from a CSS string. */
+function extractClassNames(css: string): string[] {
+  const names = new Set<string>();
+  const re = /\.([a-zA-Z_-][a-zA-Z0-9_-]*)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(css)) !== null) {
+    names.add(m[1]!);
+  }
+  return [...names];
+}
+
+/** Replace each `.name` with `.hashedName`. Longer names are processed first
+ *  to avoid partial replacement (`.btn-primary` before `.btn`). */
+function transformClassNames(css: string, classMap: Record<string, string>): string {
+  const entries = Object.entries(classMap).sort(([a], [b]) => b.length - a.length);
+  let result = css;
+  for (const [name, hashed] of entries) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    result = result.replace(new RegExp(`\\.${escaped}(?![a-zA-Z0-9_-])`, "g"), `.${hashed}`);
+  }
+  return result;
+}
+
 // @-rules whose entire block must be passed through unchanged (no selector inside).
 const SKIP_AT = /^@(?:keyframes|font-face|charset|import|layer|namespace)[\s({]/i;
 
@@ -281,14 +308,55 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
     pushBoilerplate(b, `const __f = __React.Fragment;`);
   }
 
-  // -- Style imports (one per style block, in order) ------------------------
+  // -- Style blocks — build virtual modules and emit imports ----------------
+  // We build the virtualModules array here (alongside the imports) so that
+  // CSS module blocks can emit two VMs and two imports atomically.
+  const virtualModules: VirtualModule[] = [];
+
   for (let i = 0; i < descriptor.styles.length; i++) {
     const style = descriptor.styles[i]!;
-    const id = styleVirtualId(descriptor.filename, i, style.lang);
-    // Use a template literal instead of JSON.stringify so the \0 null char
-    // is preserved verbatim — bundlers (Vite/Rollup) intercept these IDs
-    // in memory and never write them to disk.
-    pushBoilerplate(b, `import "${id}";`);
+    const isModule = "module" in style.attrs;
+    // Scoped only applies when module is not set (they are mutually exclusive).
+    const isScoped = !isModule && scopeId !== null && "scoped" in style.attrs;
+
+    let cssContent = style.content;
+    if (isScoped) cssContent = scopeCss(cssContent, `[${scopeId}]`);
+
+    const styleId = styleVirtualId(descriptor.filename, i, style.lang);
+
+    if (isModule) {
+      // Per-block hash so two module blocks in the same file don't collide.
+      const blockHash = fnv1a32(`${descriptor.filename}:${i}`);
+      const classNames = extractClassNames(cssContent);
+      const classMap: Record<string, string> = {};
+      for (const name of classNames) {
+        classMap[name] = `${name}_${blockHash}`;
+      }
+      const transformedCss = transformClassNames(cssContent, classMap);
+
+      const varName =
+        typeof style.attrs.module === "string" && style.attrs.module !== ""
+          ? style.attrs.module
+          : "styles";
+
+      const cssModuleId = `\0rsfc:cssmodule:${descriptor.filename}:${i}`;
+
+      // Style VM: transformed CSS (class names hashed) for injection.
+      virtualModules.push({ id: styleId, code: transformedCss });
+      // ClassMap VM: JS default export of the classMap for the consumer.
+      virtualModules.push({
+        id: cssModuleId,
+        code: `export default ${JSON.stringify(classMap)};`,
+        classMap,
+        moduleVar: varName,
+      });
+
+      pushBoilerplate(b, `import "${styleId}";`);
+      pushBoilerplate(b, `import ${varName} from "${cssModuleId}";`);
+    } else {
+      virtualModules.push({ id: styleId, code: cssContent });
+      pushBoilerplate(b, `import "${styleId}";`);
+    }
   }
 
   // -- <script setup>: hoist import statements to module level --------------
@@ -368,18 +436,12 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
     mappings: b.mappingEntries.join(";"),
   };
 
-  const virtualModules: VirtualModule[] = descriptor.styles.map((style, i) => ({
-    id: styleVirtualId(descriptor.filename, i, style.lang),
-    // Apply CSS scoping before the plugin compiles SCSS (works for both CSS and SCSS).
-    code: scopeId !== null && "scoped" in style.attrs
-      ? scopeCss(style.content, `[${scopeId}]`)
-      : style.content,
-  }));
-
   return { code, map, virtualModules };
 }
 
 function styleVirtualId(filename: string, index: number, lang?: string): string {
-  const ext = lang && lang !== "css" ? `.${lang}` : "";
+  // Always include a CSS-family extension so Vite's CSS transform pipeline
+  // can recognise and process the virtual module by extension.
+  const ext = lang && lang !== "css" ? `.${lang}` : ".css";
   return `\0rsfc:style:${filename}:${index}${ext}`;
 }

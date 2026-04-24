@@ -98,6 +98,16 @@ export interface VirtualModule {
   id: string;
   code: string;
   map?: string | RawSourceMap | undefined;
+  /**
+   * For CSS module virtual modules (`\0rsfc:cssmodule:...`): the hashed class
+   * name map. Webpack loader uses this to inline `const styles = {...}`.
+   */
+  classMap?: Record<string, string> | undefined;
+  /**
+   * For CSS module virtual modules: the JS variable name for the default
+   * import (e.g. `"styles"` or the value of `<style module="myName">`).
+   */
+  moduleVar?: string | undefined;
 }
 
 export interface GeneratedOutput {

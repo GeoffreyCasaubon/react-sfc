@@ -1,5 +1,5 @@
-import Hello from "../components/Hello.rsfc";
+import ClientPage from "./client-page";
 
 export default function Page() {
-  return <Hello />;
+  return <ClientPage />;
 }

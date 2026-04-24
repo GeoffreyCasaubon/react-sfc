@@ -147,10 +147,10 @@ describe("style virtual modules", () => {
     expect(virtualModules).toHaveLength(1);
   });
 
-  it("virtual module id follows the \\0rsfc:style:<filename>:<index> convention", () => {
+  it("virtual module id follows the \\0rsfc:style:<filename>:<index>.css convention", () => {
     const source = src("<style>.foo{}</style>");
     const { virtualModules } = parseAndGenerate(source, "/path/comp.rsfc");
-    expect(virtualModules[0]?.id).toBe("\0rsfc:style:/path/comp.rsfc:0");
+    expect(virtualModules[0]?.id).toBe("\0rsfc:style:/path/comp.rsfc:0.css");
   });
 
   it("virtual module code contains the raw style content", () => {
@@ -166,8 +166,8 @@ describe("style virtual modules", () => {
     );
     const { virtualModules } = parseAndGenerate(source, "/a.rsfc");
     expect(virtualModules).toHaveLength(2);
-    // Plain CSS block — no extension suffix
-    expect(virtualModules[0]?.id).toBe("\0rsfc:style:/a.rsfc:0");
+    // Plain CSS block — always gets .css extension so Vite can detect and process it
+    expect(virtualModules[0]?.id).toBe("\0rsfc:style:/a.rsfc:0.css");
     // SCSS block — lang appended so the bundler pipeline can detect the preprocessor
     expect(virtualModules[1]?.id).toBe("\0rsfc:style:/a.rsfc:1.scss");
     expect(virtualModules[0]?.code).toContain(".base");
@@ -483,6 +483,81 @@ describe("source map mappings", () => {
     const generatedLineCount = code.split("\n").length;
     const separatorCount = map.mappings.split(";").length;
     expect(separatorCount).toBe(generatedLineCount);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CSS Modules
+// ---------------------------------------------------------------------------
+
+describe("CSS modules — <style module>", () => {
+  it("emits a default import for the cssmodule virtual module", () => {
+    const { code } = parseAndGenerate('<style module>.btn{}</style>', "/a.rsfc");
+    expect(code).toContain('import styles from "\0rsfc:cssmodule:/a.rsfc:0"');
+  });
+
+  it("emits a side-effect import for the style virtual module", () => {
+    const { code } = parseAndGenerate('<style module>.btn{}</style>', "/a.rsfc");
+    expect(code).toContain('import "\0rsfc:style:/a.rsfc:0.css"');
+  });
+
+  it("produces a classMap with hashed names in the cssmodule virtual module", () => {
+    const { virtualModules } = parseAndGenerate('<style module>.btn { color: red; }</style>', "/a.rsfc");
+    const cssModVm = virtualModules.find((vm) => vm.id.startsWith("\0rsfc:cssmodule:"));
+    expect(cssModVm).toBeDefined();
+    expect(cssModVm!.classMap).toBeDefined();
+    const keys = Object.keys(cssModVm!.classMap!);
+    expect(keys).toContain("btn");
+    // Hash suffix must be present
+    expect(cssModVm!.classMap!["btn"]).toMatch(/^btn_[0-9a-f]{8}$/);
+  });
+
+  it("transforms class names in the style virtual module CSS", () => {
+    const { virtualModules } = parseAndGenerate('<style module>.btn { color: red; }</style>', "/a.rsfc");
+    const styleVm = virtualModules.find((vm) => vm.id.startsWith("\0rsfc:style:"));
+    expect(styleVm).toBeDefined();
+    // Raw .btn should be replaced with hashed name in the CSS
+    expect(styleVm!.code).not.toContain(".btn {");
+    expect(styleVm!.code).toMatch(/\.btn_[0-9a-f]{8}/);
+  });
+
+  it("uses the module attribute value as the variable name", () => {
+    const { code } = parseAndGenerate('<style module="theme">.foo{}</style>', "/a.rsfc");
+    expect(code).toContain('import theme from "\0rsfc:cssmodule:/a.rsfc:0"');
+  });
+
+  it("falls back to 'styles' when module attribute is boolean true", () => {
+    const { code } = parseAndGenerate('<style module>.foo{}</style>', "/a.rsfc");
+    expect(code).toContain("import styles from");
+  });
+
+  it("sets moduleVar on the cssmodule virtual module", () => {
+    const { virtualModules } = parseAndGenerate('<style module="theme">.foo{}</style>', "/a.rsfc");
+    const cssModVm = virtualModules.find((vm) => vm.moduleVar !== undefined);
+    expect(cssModVm?.moduleVar).toBe("theme");
+  });
+
+  it("two module blocks in the same file get different hashes", () => {
+    const { virtualModules } = parseAndGenerate(
+      '<style module>.foo{}</style><style module="other">.foo{}</style>',
+      "/a.rsfc"
+    );
+    const [vm0, vm1] = virtualModules
+      .filter((vm) => vm.classMap !== undefined)
+      .map((vm) => vm.classMap!["foo"]);
+    expect(vm0).toBeDefined();
+    expect(vm1).toBeDefined();
+    expect(vm0).not.toBe(vm1);
+  });
+
+  it("does not scope a module style (module and scoped are mutually exclusive)", () => {
+    const { virtualModules } = parseAndGenerate(
+      '<style module scoped>.foo{}</style>',
+      "/a.rsfc"
+    );
+    const styleVm = virtualModules.find((vm) => vm.id.startsWith("\0rsfc:style:"));
+    // Should NOT contain data-v- scope attribute
+    expect(styleVm!.code).not.toContain("data-v-");
   });
 });
 

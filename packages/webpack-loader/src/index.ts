@@ -74,12 +74,22 @@ export default function rsfcLoader(
  */
 async function injectStyles(code: string, virtualModules: VirtualModule[]): Promise<string> {
   let result = code;
-  for (let i = 0; i < virtualModules.length; i++) {
-    const vm = virtualModules[i];
-    if (vm === undefined) continue;
-    const importStatement = `import "${vm.id}";`;
-    const css = await compileCss(vm);
-    result = result.replace(importStatement, buildStyleIIFE(css, i));
+  let styleIdx = 0;
+  for (const vm of virtualModules) {
+    if (vm.moduleVar !== undefined) {
+      // CSS module VM: replace `import styles from "...";` with a plain const.
+      const importStatement = `import ${vm.moduleVar} from "${vm.id}";`;
+      result = result.replace(
+        importStatement,
+        `const ${vm.moduleVar} = ${JSON.stringify(vm.classMap ?? {})};`,
+      );
+    } else {
+      // Regular style VM: compile (if needed) and inject via IIFE.
+      const importStatement = `import "${vm.id}";`;
+      const css = await compileCss(vm);
+      result = result.replace(importStatement, buildStyleIIFE(css, styleIdx));
+      styleIdx++;
+    }
   }
   return result;
 }
@@ -98,24 +108,24 @@ async function compileCss(vm: VirtualModule): Promise<string> {
   }
 
   if (vm.id.endsWith(".less")) {
-    let less: typeof import("less");
+    let less: typeof import("less").default;
     try {
-      less = await import("less");
+      less = (await import("less")).default;
     } catch {
       throw new Error('[rsfc] Install "less" to use <style lang="less"> blocks.');
     }
-    const result = await less.default.render(vm.code);
+    const result = await less.render(vm.code);
     return result.css;
   }
 
   if (vm.id.endsWith(".styl") || vm.id.endsWith(".stylus")) {
-    let stylus: { default: { render: (s: string) => string } };
+    let stylus: typeof import("stylus").default;
     try {
-      stylus = await import("stylus") as typeof stylus;
+      stylus = (await import("stylus")).default;
     } catch {
       throw new Error('[rsfc] Install "stylus" to use <style lang="stylus/styl"> blocks.');
     }
-    return stylus.default.render(vm.code);
+    return stylus.render(vm.code);
   }
 
   return vm.code;

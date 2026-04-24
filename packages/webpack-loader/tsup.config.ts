@@ -10,6 +10,5 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   outDir: "dist",
-  cjsInterop: true,
   external: ["webpack", "@rsfc/core"],
 });

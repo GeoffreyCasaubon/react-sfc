@@ -146,7 +146,7 @@ describe("transform — generated code", () => {
     // the raw \0 import statement is preserved as a side-effect import.
     const result = await callTransform(plugin, source, "/a.rsfc");
     // The virtual module must be registered regardless
-    expect(callResolveId(plugin, "\0rsfc:style:/a.rsfc:0")).toBe("\0rsfc:style:/a.rsfc:0");
+    expect(callResolveId(plugin, "\0rsfc:style:/a.rsfc:0.css")).toBe("\0rsfc:style:/a.rsfc:0.css");
   });
 
   it("handles all four blocks together", async () => {
@@ -170,6 +170,46 @@ describe("transform — generated code", () => {
     expect(callResolveId(plugin, scssId)).toBe(scssId);
     const result = callLoad(plugin, scssId) as { code: string };
     expect(result.code).toContain(".foo");
+  });
+
+  it("registers plain css virtual modules with .css extension id", async () => {
+    const plugin = rsfcPlugin();
+    await callTransform(plugin, "<style>.bar{}</style>", "/comp.rsfc");
+    const cssId = "\0rsfc:style:/comp.rsfc:0.css";
+    expect(callResolveId(plugin, cssId)).toBe(cssId);
+    const result = callLoad(plugin, cssId) as { code: string };
+    expect(result.code).toContain(".bar");
+  });
+
+  it("registers cssmodule virtual module for <style module> blocks", async () => {
+    const plugin = rsfcPlugin();
+    await callTransform(plugin, '<style module>.btn{color:red}</style>', "/mod.rsfc");
+    const cssModId = "\0rsfc:cssmodule:/mod.rsfc:0";
+    expect(callResolveId(plugin, cssModId)).toBe(cssModId);
+    const result = callLoad(plugin, cssModId) as { code: string };
+    // Should be a JS default export with the classMap
+    expect(result.code).toContain("export default");
+    expect(result.code).toContain("btn");
+  });
+
+  it("emits default import for <style module> in transformed code", async () => {
+    const plugin = rsfcPlugin();
+    const result = (await callTransform(
+      plugin,
+      '<style module>.btn{}</style>',
+      "/mod.rsfc"
+    )) as { code: string };
+    // esbuild drops unused imports; use a template with className to keep it
+    const result2 = (await callTransform(
+      plugin,
+      src('<style module>.btn{}</style>', '<template><div className={styles.btn}/></template>'),
+      "/mod.rsfc"
+    )) as { code: string };
+    // The cssmodule import should be resolved (registered in cache)
+    expect(callResolveId(plugin, "\0rsfc:cssmodule:/mod.rsfc:0")).toBe(
+      "\0rsfc:cssmodule:/mod.rsfc:0"
+    );
+    expect(result2).not.toBeNull();
   });
 
   it("strips TypeScript type annotations from script lang=ts blocks", async () => {
@@ -245,7 +285,7 @@ describe("resolveId", () => {
     const plugin = rsfcPlugin();
     // Run transform first to register the virtual module
     await callTransform(plugin, "<style>.foo{}</style>", "/comp.rsfc");
-    const vmId = "\0rsfc:style:/comp.rsfc:0";
+    const vmId = "\0rsfc:style:/comp.rsfc:0.css";
     expect(callResolveId(plugin, vmId)).toBe(vmId);
   });
 
@@ -253,7 +293,7 @@ describe("resolveId", () => {
     const plugin1 = rsfcPlugin();
     const plugin2 = rsfcPlugin();
     await callTransform(plugin1, "<style>.foo{}</style>", "/comp.rsfc");
-    const vmId = "\0rsfc:style:/comp.rsfc:0";
+    const vmId = "\0rsfc:style:/comp.rsfc:0.css";
     // plugin2 never saw this file → should not resolve it
     expect(callResolveId(plugin2, vmId)).toBeNull();
   });
@@ -272,7 +312,7 @@ describe("load", () => {
   it("returns the style code for a registered virtual module", async () => {
     const plugin = rsfcPlugin();
     await callTransform(plugin, "<style>\n.foo { color: red; }\n</style>", "/comp.rsfc");
-    const vmId = "\0rsfc:style:/comp.rsfc:0";
+    const vmId = "\0rsfc:style:/comp.rsfc:0.css";
     const result = callLoad(plugin, vmId) as { code: string };
     expect(result.code).toContain(".foo { color: red; }");
   });
@@ -284,8 +324,8 @@ describe("load", () => {
       src("<style>.base{}</style>", "<style>.theme{}</style>"),
       "/comp.rsfc"
     );
-    const r0 = callLoad(plugin, "\0rsfc:style:/comp.rsfc:0") as { code: string };
-    const r1 = callLoad(plugin, "\0rsfc:style:/comp.rsfc:1") as { code: string };
+    const r0 = callLoad(plugin, "\0rsfc:style:/comp.rsfc:0.css") as { code: string };
+    const r1 = callLoad(plugin, "\0rsfc:style:/comp.rsfc:1.css") as { code: string };
     expect(r0.code).toContain(".base");
     expect(r1.code).toContain(".theme");
   });
@@ -295,7 +335,7 @@ describe("load", () => {
     const plugin2 = rsfcPlugin();
     await callTransform(plugin1, "<style>.foo{}</style>", "/comp.rsfc");
     // plugin2 never processed this file
-    expect(callLoad(plugin2, "\0rsfc:style:/comp.rsfc:0")).toBeNull();
+    expect(callLoad(plugin2, "\0rsfc:style:/comp.rsfc:0.css")).toBeNull();
   });
 });
 
@@ -352,7 +392,7 @@ describe("handleHotUpdate", () => {
     const plugin = rsfcPlugin();
     // Warm up with initial content
     await callTransform(plugin, "<style>.old{}</style>", "/comp.rsfc");
-    const vmId = "\0rsfc:style:/comp.rsfc:0";
+    const vmId = "\0rsfc:style:/comp.rsfc:0.css";
     expect((callLoad(plugin, vmId) as { code: string }).code).toContain(".old");
 
     // Hot update with new content
@@ -373,7 +413,7 @@ describe("handleHotUpdate", () => {
 
   it("includes style virtual module nodes in the returned list", async () => {
     const plugin = rsfcPlugin();
-    const vmId = "\0rsfc:style:/comp.rsfc:0";
+    const vmId = "\0rsfc:style:/comp.rsfc:0.css";
     const result = await callHotUpdate(
       plugin,
       "/comp.rsfc",

@@ -188,6 +188,43 @@ describe("style blocks — inline injection", () => {
 });
 
 // ---------------------------------------------------------------------------
+// CSS Modules — inline injection
+// ---------------------------------------------------------------------------
+
+describe("CSS modules — inline injection", () => {
+  it("inlines const styles = {...} instead of leaving a virtual import", async () => {
+    const { code } = await runLoader('<style module>.btn{color:red}</style>', "/a.rsfc");
+    expect(code).toContain("const styles");
+    expect(code).not.toContain("\0rsfc:cssmodule");
+  });
+
+  it("classMap keys are the original class names", async () => {
+    const { code } = await runLoader('<style module>.btn{color:red}.card{}</style>', "/a.rsfc");
+    expect(code).toContain('"btn"');
+    expect(code).toContain('"card"');
+  });
+
+  it("classMap values are hashed class names", async () => {
+    const { code } = await runLoader('<style module>.btn{}</style>', "/a.rsfc");
+    // Value should be btn_<8hexchars>
+    expect(code).toMatch(/"btn_[0-9a-f]{8}"/);
+  });
+
+  it("still injects the CSS with hashed class names via IIFE", async () => {
+    const { code } = await runLoader('<style module>.btn{color:red}</style>', "/a.rsfc");
+    expect(code).toContain("typeof document");
+    // Hashed selector present in injected CSS
+    expect(code).toMatch(/btn_[0-9a-f]{8}/);
+  });
+
+  it("uses named module attribute as the variable name", async () => {
+    const { code } = await runLoader('<style module="theme">.foo{}</style>', "/a.rsfc");
+    expect(code).toContain("const theme");
+    expect(code).not.toContain("const styles");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Source map
 // ---------------------------------------------------------------------------
 
