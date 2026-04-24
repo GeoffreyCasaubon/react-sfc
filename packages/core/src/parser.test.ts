@@ -164,7 +164,7 @@ describe("multiple blocks", () => {
       "<style>",
       ".base {}",
       "</style>",
-      "<style lang=\"scss\">",
+      '<style lang="scss">',
       ".theme {}",
       "</style>"
     );
@@ -178,18 +178,21 @@ describe("multiple blocks", () => {
 });
 
 // ---------------------------------------------------------------------------
-// startLine tracking
+// SourceLocation tracking
 // ---------------------------------------------------------------------------
 
-describe("startLine", () => {
-  it("startLine is 0 for a block on the first line", () => {
+describe("SourceLocation (loc)", () => {
+  it("block on the first line has loc.start.line === 0", () => {
+    // <script> ends at offset 8; content starts immediately after on line 0
     const source = "<script>\ncode\n</script>";
     const result = parse(source, { filename: "a.rsfc" });
-    // content starts right after <script> which is on line 0
-    expect(result.script?.startLine).toBe(0);
+
+    expect(result.script?.loc.start.line).toBe(0);
+    expect(result.script?.loc.start.offset).toBe(8); // right after '>'
+    expect(result.script?.loc.start.column).toBe(8);
   });
 
-  it("startLine reflects the line where the opening tag ends", () => {
+  it("loc.start.line reflects newlines before the content", () => {
     const source = src(
       "// preamble line 0",
       "// preamble line 1",
@@ -197,12 +200,25 @@ describe("startLine", () => {
       "code",
       "</script>"
     );
-    // <script> tag itself ends on line 2; content starts on line 2
     const result = parse(source, { filename: "a.rsfc" });
-    expect(result.script?.startLine).toBe(2);
+    // Two preamble lines → <script> is on line 2; content starts on line 2
+    expect(result.script?.loc.start.line).toBe(2);
   });
 
-  it("second block has higher startLine than first", () => {
+  it("loc.end points to the exclusive end (first char of closing tag)", () => {
+    // source: "<script>\ncode\n</script>"
+    // offsets: 0-7=<script>, 8=\n, 9-12=code, 13=\n, 14=<(</script>)
+    // content = slice(8, 14) = "\ncode\n"
+    // loc.end is at offset 14: after the second \n → line 2, column 0
+    const source = "<script>\ncode\n</script>";
+    const result = parse(source, { filename: "a.rsfc" });
+
+    expect(result.script?.loc.end.offset).toBe(14);
+    expect(result.script?.loc.end.line).toBe(2);
+    expect(result.script?.loc.end.column).toBe(0);
+  });
+
+  it("second block has higher loc.start.line than first", () => {
     const source = src(
       "<script>",
       "code",
@@ -212,9 +228,26 @@ describe("startLine", () => {
       "</style>"
     );
     const result = parse(source, { filename: "a.rsfc" });
-    const scriptLine = result.script?.startLine ?? -1;
-    const styleLine = result.styles[0]?.startLine ?? -1;
+    const scriptLine = result.script?.loc.start.line ?? -1;
+    const styleLine = result.styles[0]?.loc.start.line ?? -1;
     expect(styleLine).toBeGreaterThan(scriptLine);
+  });
+
+  it("loc.start.column is 0 when block starts at beginning of its line", () => {
+    const source = src("", "<script>", "code", "</script>");
+    //                   ^line 0 empty, <script> at start of line 1
+    const result = parse(source, { filename: "a.rsfc" });
+    // content starts right after '>' on line 1, column 8 (length of '<script>')
+    expect(result.script?.loc.start.line).toBe(1);
+    expect(result.script?.loc.start.column).toBe(8);
+  });
+
+  it("error loc points to the offending opening tag", () => {
+    const source = "<script>\nno closing tag";
+    const result = parse(source, { filename: "a.rsfc" });
+
+    expect(result.errors[0]?.loc.start.line).toBe(0);
+    expect(result.errors[0]?.loc.start.offset).toBe(0);
   });
 });
 
@@ -258,7 +291,7 @@ describe("template with nested content", () => {
     );
     const result = parse(source, { filename: "a.rsfc" });
 
-    // Only one style block (the top-level one), not the one inside template
+    // Only the top-level <style> block — not the one inside <template>
     expect(result.styles).toHaveLength(1);
     expect(result.styles[0]?.content).toContain(".actual");
   });
@@ -331,7 +364,6 @@ describe("error cases", () => {
     );
     const result = parse(source, { filename: "a.rsfc" });
 
-    // style block still parsed even though script had no close
     expect(result.styles).toHaveLength(1);
     expect(result.errors.some((e) => e.message.match(/script/))).toBe(true);
   });

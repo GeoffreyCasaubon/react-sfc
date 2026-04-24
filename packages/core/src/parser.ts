@@ -1,20 +1,35 @@
-import type { RsfcBlock, RsfcBlockKind, RsfcDescriptor, RsfcParseError } from "./types.js";
+import type {
+  RsfcBlock,
+  RsfcBlockKind,
+  RsfcDescriptor,
+  RsfcParseError,
+  SourceLocation,
+  SourcePosition,
+  StyleBlock,
+} from "./types.js";
 
 const KNOWN_BLOCK_KINDS = ["script", "clientScript", "template", "style"] as const;
-
-// Matches an opening tag for any known block kind and captures its attributes string.
-// The `g` flag is used with manual lastIndex management to skip over block contents.
 const OPEN_TAG_SRC = `<(${KNOWN_BLOCK_KINDS.join("|")})((?:\\s[^>]*)?)>`;
-
-// Parses key="value", key='value', or bare key from an attribute string.
 const ATTR_RE = /(\w[\w:-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/g;
 
-function countNewlines(str: string): number {
-  let n = 0;
-  for (let i = 0; i < str.length; i++) {
-    if (str[i] === "\n") n++;
+/** Compute line, column, and offset for an index within `source`. */
+function positionAt(source: string, offset: number): SourcePosition {
+  let line = 0;
+  let lineStart = 0;
+  for (let i = 0; i < offset; i++) {
+    if (source[i] === "\n") {
+      line++;
+      lineStart = i + 1;
+    }
   }
-  return n;
+  return { line, column: offset - lineStart, offset };
+}
+
+function locAt(source: string, start: number, end: number): SourceLocation {
+  return {
+    start: positionAt(source, start),
+    end: positionAt(source, end),
+  };
 }
 
 function parseAttrs(
@@ -27,7 +42,6 @@ function parseAttrs(
   let m: RegExpExecArray | null;
   while ((m = ATTR_RE.exec(attrsStr)) !== null) {
     if (m[0].length === 0) {
-      // Safety: never loop on zero-length match
       ATTR_RE.lastIndex++;
       continue;
     }
@@ -74,21 +88,19 @@ export function parse(
     if (closeIdx === -1) {
       errors.push({
         message: `Missing closing tag </${tagName}>`,
-        line: countNewlines(source.slice(0, match.index)),
+        loc: locAt(source, match.index, openTagEnd),
       });
-      // Do not advance lastIndex — let the regex continue from after the opening tag
-      // so we can still find other well-formed blocks that follow.
       continue;
     }
 
     const content = source.slice(openTagEnd, closeIdx);
-    const startLine = countNewlines(source.slice(0, openTagEnd));
+    const loc = locAt(source, openTagEnd, closeIdx);
     const { lang, attrs } = parseAttrs(attrsStr);
 
     const block: RsfcBlock = {
       kind: tagName,
       content,
-      startLine,
+      loc,
       attrs,
       ...(lang !== undefined ? { lang } : {}),
     };
@@ -96,33 +108,27 @@ export function parse(
     switch (tagName) {
       case "script":
         if (descriptor.script !== null) {
-          errors.push({ message: "Duplicate <script> block", line: startLine });
+          errors.push({ message: "Duplicate <script> block", loc });
         } else {
           descriptor.script = block;
         }
         break;
       case "clientScript":
         if (descriptor.clientScript !== null) {
-          errors.push({
-            message: "Duplicate <clientScript> block",
-            line: startLine,
-          });
+          errors.push({ message: "Duplicate <clientScript> block", loc });
         } else {
           descriptor.clientScript = block;
         }
         break;
       case "template":
         if (descriptor.template !== null) {
-          errors.push({
-            message: "Duplicate <template> block",
-            line: startLine,
-          });
+          errors.push({ message: "Duplicate <template> block", loc });
         } else {
           descriptor.template = block;
         }
         break;
       case "style":
-        descriptor.styles.push(block);
+        descriptor.styles.push(block as StyleBlock);
         break;
     }
 

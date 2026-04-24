@@ -12,6 +12,25 @@
  */
 
 // ---------------------------------------------------------------------------
+// Location types — shared by parser and generator for source mapping
+// ---------------------------------------------------------------------------
+
+export interface SourcePosition {
+  /** 0-based line number within the source file. */
+  line: number;
+  /** 0-based column number within the line. */
+  column: number;
+  /** 0-based byte offset from the start of the source file. */
+  offset: number;
+}
+
+/** Spans a range in the source file, from `start` (inclusive) to `end` (exclusive). */
+export interface SourceLocation {
+  start: SourcePosition;
+  end: SourcePosition;
+}
+
+// ---------------------------------------------------------------------------
 // Descriptor types — produced by the parser
 // ---------------------------------------------------------------------------
 
@@ -23,15 +42,19 @@ export interface RsfcBlock {
   content: string;
   /** Language attribute value, e.g. "tsx", "scss". Undefined when absent. */
   lang?: string | undefined;
-  /** 0-based line offset of the block content start within the source file. */
-  startLine: number;
+  /** Source location of the block content (not including the opening/closing tags). */
+  loc: SourceLocation;
   /** Attributes declared on the opening tag, excluding `lang`. */
   attrs: Record<string, string | true>;
 }
 
+/** A `<style>` block — carries the same shape as RsfcBlock but its kind is always "style". */
+export type StyleBlock = RsfcBlock & { kind: "style" };
+
 export interface RsfcParseError {
   message: string;
-  line: number;
+  /** Source location of the offending opening tag. */
+  loc: SourceLocation;
 }
 
 export interface RsfcDescriptor {
@@ -40,7 +63,8 @@ export interface RsfcDescriptor {
   script: RsfcBlock | null;
   clientScript: RsfcBlock | null;
   template: RsfcBlock | null;
-  styles: RsfcBlock[];
+  /** Zero or more style blocks, in source order. */
+  styles: StyleBlock[];
   errors: RsfcParseError[];
 }
 
