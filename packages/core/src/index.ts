@@ -1,5 +1,4 @@
 // @rsfc/core — public API
-// This barrel forms the public contract of the package.
 
 export type {
   RsfcBlockKind,
@@ -10,3 +9,5 @@ export type {
   VirtualModule,
   GeneratedOutput,
 } from "./types.js";
+
+export { parse } from "./parser.js";
