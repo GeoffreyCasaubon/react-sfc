@@ -64,11 +64,12 @@ describe("plugin shape", () => {
     expect(rsfcPlugin().enforce).toBe("pre");
   });
 
-  it("exposes transform, resolveId, and load hooks", () => {
+  it("exposes transform, resolveId, load, and handleHotUpdate hooks", () => {
     const plugin = rsfcPlugin();
     expect(plugin.transform).toBeDefined();
     expect(plugin.resolveId).toBeDefined();
     expect(plugin.load).toBeDefined();
+    expect(plugin.handleHotUpdate).toBeDefined();
   });
 });
 
@@ -295,5 +296,91 @@ describe("load", () => {
     await callTransform(plugin1, "<style>.foo{}</style>", "/comp.rsfc");
     // plugin2 never processed this file
     expect(callLoad(plugin2, "\0rsfc:style:/comp.rsfc:0")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// handleHotUpdate — HMR
+// ---------------------------------------------------------------------------
+
+type HmrCtx = Parameters<
+  NonNullable<
+    import("vite").Plugin extends { handleHotUpdate?: infer H } ? H : never
+  >
+>[0];
+
+function callHotUpdate(
+  plugin: import("vite").Plugin,
+  file: string,
+  source: string,
+  existingVmId?: string
+) {
+  const fn = plugin.handleHotUpdate;
+  if (fn === undefined || typeof fn !== "function")
+    throw new Error("handleHotUpdate not defined");
+
+  const mockMod = { id: file } as unknown as import("vite").ModuleNode;
+  const styleNode = existingVmId
+    ? ({ id: existingVmId } as unknown as import("vite").ModuleNode)
+    : null;
+
+  const ctx = {
+    file,
+    timestamp: Date.now(),
+    modules: [mockMod],
+    read: () => source,
+    server: {
+      moduleGraph: {
+        getModuleById: (id: string) =>
+          id === existingVmId ? styleNode : null,
+      },
+    },
+  } as unknown as HmrCtx;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (fn as any).call({}, ctx) as Promise<import("vite").ModuleNode[] | void>;
+}
+
+describe("handleHotUpdate", () => {
+  it("returns undefined (no-op) for non-.rsfc files", async () => {
+    const plugin = rsfcPlugin();
+    const result = await callHotUpdate(plugin, "/src/foo.ts", "const x = 1");
+    expect(result).toBeUndefined();
+  });
+
+  it("refreshes the virtual module cache when a .rsfc file changes", async () => {
+    const plugin = rsfcPlugin();
+    // Warm up with initial content
+    await callTransform(plugin, "<style>.old{}</style>", "/comp.rsfc");
+    const vmId = "\0rsfc:style:/comp.rsfc:0";
+    expect((callLoad(plugin, vmId) as { code: string }).code).toContain(".old");
+
+    // Hot update with new content
+    await callHotUpdate(plugin, "/comp.rsfc", "<style>.new{}</style>", vmId);
+    expect((callLoad(plugin, vmId) as { code: string }).code).toContain(".new");
+  });
+
+  it("returns the .rsfc module node", async () => {
+    const plugin = rsfcPlugin();
+    const result = await callHotUpdate(
+      plugin,
+      "/comp.rsfc",
+      "<script>export const x = 1</script>"
+    );
+    expect(Array.isArray(result)).toBe(true);
+    expect((result as import("vite").ModuleNode[]).some((m) => m.id === "/comp.rsfc")).toBe(true);
+  });
+
+  it("includes style virtual module nodes in the returned list", async () => {
+    const plugin = rsfcPlugin();
+    const vmId = "\0rsfc:style:/comp.rsfc:0";
+    const result = await callHotUpdate(
+      plugin,
+      "/comp.rsfc",
+      "<style>.x{}</style>",
+      vmId
+    );
+    expect(Array.isArray(result)).toBe(true);
+    expect((result as import("vite").ModuleNode[]).some((m) => m.id === vmId)).toBe(true);
   });
 });

@@ -1,4 +1,4 @@
-import type { Plugin, TransformResult } from "vite";
+import type { Plugin, TransformResult, ModuleNode } from "vite";
 import { transformWithEsbuild } from "vite";
 import { parse, generate } from "@rsfc/core";
 
@@ -101,6 +101,27 @@ export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
       });
 
       return { code: stripped.code, map: stripped.map } as unknown as TransformResult;
+    },
+
+    async handleHotUpdate({ file, read, modules, server }) {
+      if (!filter(file)) return;
+
+      // Re-generate to get fresh virtual module content.
+      const source = await read();
+      const output = generate(parse(source, { filename: file }));
+
+      // Refresh the cache so the next load() call returns updated CSS/SCSS.
+      for (const vm of output.virtualModules) {
+        virtualModuleCache.set(vm.id, vm.code);
+      }
+
+      // Collect style virtual module nodes so Vite sends targeted CSS updates
+      // rather than a full page reload.
+      const styleModules: ModuleNode[] = output.virtualModules
+        .map((vm) => server.moduleGraph.getModuleById(vm.id))
+        .filter((m): m is ModuleNode => m !== null && m !== undefined);
+
+      return [...modules, ...styleModules];
     },
   };
 }

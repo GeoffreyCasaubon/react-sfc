@@ -81,9 +81,21 @@ export default nextConfig;
 | `<script>` | no | Module-level code, exports, server logic |
 | `<clientScript>` | no | Client-only code (not SSR) |
 | `<template>` | no | JSX, compiled to `export default function` |
-| `<style>` | no | Scoped CSS; multiple blocks allowed |
+| `<style>` | no | Multiple blocks allowed; supports `lang="scss"` / `lang="sass"` |
 
-Both `<script>` and `<template>` accept a `lang="ts"` attribute for TypeScript.
+`<script>` and `<template>` accept `lang="ts"` for TypeScript.
+
+`<style scoped>` generates a unique `data-v-*` attribute and stamps every DOM element in the template and every CSS selector with it — styles stay component-local.
+
+```html
+<style lang="scss" scoped>
+.card {
+  border: 1px solid #ccc;
+
+  h2 { color: #111; }   /* compiles to .card[data-v-xxx] h2[data-v-xxx] */
+}
+</style>
+```
 
 ## Development
 

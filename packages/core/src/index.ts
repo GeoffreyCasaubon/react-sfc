@@ -14,4 +14,4 @@ export type {
 } from "./types.js";
 
 export { parse } from "./parser.js";
-export { generate } from "./generator.js";
+export { generate, scopeCss } from "./generator.js";

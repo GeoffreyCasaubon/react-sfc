@@ -84,13 +84,112 @@ function pushMapped(
 }
 
 // ---------------------------------------------------------------------------
+// Scope id helpers — <style scoped> support
+// ---------------------------------------------------------------------------
+
+/** FNV-1a 32-bit hash → 8-char hex string. Deterministic scope id from filename. */
+function fnv1a32(s: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
+}
+
+/** Append `attr` before any trailing pseudo-elements on a single CSS selector. */
+function scopeSelector(sel: string, attr: string): string {
+  const trimmed = sel.trim();
+  if (!trimmed) return sel;
+  const leadWs = /^\s*/.exec(sel)?.[0] ?? "";
+  const trailWs = /\s*$/.exec(sel)?.[0] ?? "";
+  // Insert attr before trailing double-colon pseudo-elements (::before etc.)
+  const pseudoRe = /((?:::[\w-]+(?:\([^)]*\))?)+)$/;
+  const m = pseudoRe.exec(trimmed);
+  if (m) {
+    const base = trimmed.slice(0, trimmed.length - m[0].length);
+    return leadWs + base + attr + m[0] + trailWs;
+  }
+  return leadWs + trimmed + attr + trailWs;
+}
+
+function scopeSelectorList(list: string, attr: string): string {
+  return list
+    .split(",")
+    .map((sel) => scopeSelector(sel, attr))
+    .join(",");
+}
+
+// @-rules whose entire block must be passed through unchanged (no selector inside).
+const SKIP_AT = /^@(?:keyframes|font-face|charset|import|layer|namespace)[\s({]/i;
+
+/**
+ * Append `attr` to every CSS selector in `css`.
+ * @keyframes / @font-face blocks are left untouched.
+ * @media / @supports contents are recursively scoped.
+ * Works on both plain CSS and raw SCSS (before compilation).
+ */
+export function scopeCss(css: string, attr: string): string {
+  let out = "";
+  let i = 0;
+  let depth = 0;
+  let skipAt = -1; // depth at which we entered a skip @-rule block
+
+  while (i < css.length) {
+    const open = css.indexOf("{", i);
+    const close = css.indexOf("}", i);
+    if (open === -1 && close === -1) { out += css.slice(i); break; }
+
+    const isOpen = open !== -1 && (close === -1 || open < close);
+    if (isOpen) {
+      const token = css.slice(i, open);
+      if (skipAt >= 0) {
+        out += token + "{";
+      } else if (SKIP_AT.test(token.trim())) {
+        skipAt = depth;
+        out += token + "{";
+      } else if (token.trim().startsWith("@")) {
+        // @media, @supports, etc. — scope contents, not the @-rule itself
+        out += token + "{";
+      } else {
+        out += scopeSelectorList(token, attr) + "{";
+      }
+      i = open + 1;
+      depth++;
+    } else {
+      out += css.slice(i, close + 1);
+      i = close + 1;
+      depth--;
+      if (skipAt >= 0 && depth === skipAt) skipAt = -1;
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
   const b = makeBuilder();
 
-  // -- Style imports (one per style block, in order) -----------------------
+  // Detect scoped style blocks and compute a stable scope id from the filename.
+  const hasScoped = descriptor.styles.some((s) => "scoped" in s.attrs);
+  const scopeId = hasScoped ? `data-v-${fnv1a32(descriptor.filename)}` : null;
+
+  // -- JSX scope factory (must come before any JSX) -------------------------
+  // Pragma comments switch esbuild from the automatic runtime to a custom
+  // factory (__h) that stamps every native DOM element with the scope attribute.
+  if (scopeId !== null) {
+    pushBoilerplate(b, `/** @jsxRuntime classic */`);
+    pushBoilerplate(b, `/** @jsx __h */`);
+    pushBoilerplate(b, `/** @jsxFrag __f */`);
+    pushBoilerplate(b, `import * as __React from "react";`);
+    pushBoilerplate(b, `const __h = (t, p, ...c) => __React.createElement(t, typeof t === "string" ? {...(p ?? {}), "${scopeId}": ""} : p, ...c);`);
+    pushBoilerplate(b, `const __f = __React.Fragment;`);
+  }
+
+  // -- Style imports (one per style block, in order) ------------------------
   for (let i = 0; i < descriptor.styles.length; i++) {
     const style = descriptor.styles[i]!;
     const id = styleVirtualId(descriptor.filename, i, style.lang);
@@ -144,12 +243,13 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
     mappings: b.mappingEntries.join(";"),
   };
 
-  const virtualModules: VirtualModule[] = descriptor.styles.map(
-    (style, i) => ({
-      id: styleVirtualId(descriptor.filename, i, style.lang),
-      code: style.content,
-    })
-  );
+  const virtualModules: VirtualModule[] = descriptor.styles.map((style, i) => ({
+    id: styleVirtualId(descriptor.filename, i, style.lang),
+    // Apply CSS scoping before the plugin compiles SCSS (works for both CSS and SCSS).
+    code: scopeId !== null && "scoped" in style.attrs
+      ? scopeCss(style.content, `[${scopeId}]`)
+      : style.content,
+  }));
 
   return { code, map, virtualModules };
 }

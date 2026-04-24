@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parse } from "./parser.js";
-import { generate } from "./generator.js";
+import { generate, scopeCss } from "./generator.js";
 import type { RsfcDescriptor } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -236,6 +236,119 @@ describe("all blocks combined", () => {
     const scriptIdx = code.indexOf("export const x");
     expect(importIdx).toBeGreaterThanOrEqual(0);
     expect(importIdx).toBeLessThan(scriptIdx);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// scopeCss — standalone unit tests
+// ---------------------------------------------------------------------------
+
+describe("scopeCss", () => {
+  const attr = "[data-v-test]";
+
+  it("appends attribute to a simple class selector", () => {
+    expect(scopeCss(".foo { color: red; }", attr)).toBe(".foo[data-v-test] { color: red; }");
+  });
+
+  it("appends attribute to each selector in a comma-separated list", () => {
+    expect(scopeCss(".foo, .bar { }", attr)).toBe(".foo[data-v-test], .bar[data-v-test] { }");
+  });
+
+  it("appends attribute to element selectors", () => {
+    expect(scopeCss("h1 { margin: 0; }", attr)).toBe("h1[data-v-test] { margin: 0; }");
+  });
+
+  it("appends attribute to the last selector in a descendant chain", () => {
+    // Only the last compound selector gets the attribute
+    expect(scopeCss(".parent .child { }", attr)).toContain(".child[data-v-test]");
+  });
+
+  it("inserts attribute before ::before / ::after pseudo-elements", () => {
+    expect(scopeCss(".foo::before { content: ''; }", attr)).toContain(
+      ".foo[data-v-test]::before"
+    );
+  });
+
+  it("leaves @keyframes blocks untouched", () => {
+    const css = "@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }";
+    expect(scopeCss(css, attr)).toBe(css);
+  });
+
+  it("scopes selectors inside @media blocks", () => {
+    const result = scopeCss("@media (min-width: 768px) { .foo { color: red; } }", attr);
+    expect(result).toContain(".foo[data-v-test]");
+    expect(result).toContain("@media");
+  });
+
+  it("scopes nested SCSS selectors (before compilation)", () => {
+    const scss = ".parent { .child { color: red; } }";
+    const result = scopeCss(scss, attr);
+    expect(result).toContain(".parent[data-v-test]");
+    expect(result).toContain(".child[data-v-test]");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Scoped styles — generate() integration
+// ---------------------------------------------------------------------------
+
+describe("scoped styles", () => {
+  it("scopes CSS selectors in <style scoped> virtual module", () => {
+    const source = "<style scoped>.foo { color: red; }</style>";
+    const { virtualModules } = parseAndGenerate(source, "/comp.rsfc");
+    expect(virtualModules[0]?.code).toMatch(/\.foo\[data-v-[0-9a-f]+\]/);
+  });
+
+  it("does not scope <style> blocks without the scoped attribute", () => {
+    const source = "<style>.foo { color: red; }</style>";
+    const { virtualModules } = parseAndGenerate(source, "/comp.rsfc");
+    expect(virtualModules[0]?.code).toBe(".foo { color: red; }");
+  });
+
+  it("only scopes blocks that have the scoped attribute when mixed", () => {
+    const source = src(
+      "<style>.global { }</style>",
+      "<style scoped>.local { }</style>"
+    );
+    const { virtualModules } = parseAndGenerate(source, "/comp.rsfc");
+    expect(virtualModules[0]?.code).toBe(".global { }");
+    expect(virtualModules[1]?.code).toMatch(/\.local\[data-v-[0-9a-f]+\]/);
+  });
+
+  it("scope id is derived from filename — same file always produces same id", () => {
+    const source = "<style scoped>.x{}</style>";
+    const r1 = parseAndGenerate(source, "/comp.rsfc");
+    const r2 = parseAndGenerate(source, "/comp.rsfc");
+    expect(r1.virtualModules[0]?.code).toBe(r2.virtualModules[0]?.code);
+  });
+
+  it("different filenames produce different scope ids", () => {
+    const source = "<style scoped>.x{}</style>";
+    const r1 = parseAndGenerate(source, "/a.rsfc");
+    const r2 = parseAndGenerate(source, "/b.rsfc");
+    expect(r1.virtualModules[0]?.code).not.toBe(r2.virtualModules[0]?.code);
+  });
+
+  it("injects JSX pragma and __h factory when scoped", () => {
+    const source = "<style scoped>.x{}</style><template><div/></template>";
+    const { code } = parseAndGenerate(source, "/comp.rsfc");
+    expect(code).toContain("@jsxRuntime classic");
+    expect(code).toContain("@jsx __h");
+    expect(code).toContain("const __h =");
+  });
+
+  it("does not inject JSX pragma for non-scoped components", () => {
+    const source = "<style>.x{}</style><template><div/></template>";
+    const { code } = parseAndGenerate(source, "/comp.rsfc");
+    expect(code).not.toContain("@jsxRuntime classic");
+    expect(code).not.toContain("const __h =");
+  });
+
+  it("__h factory stamps native DOM elements with the scope attribute", () => {
+    const source = "<style scoped>.x{}</style>";
+    const { code } = parseAndGenerate(source, "/comp.rsfc");
+    // The factory spreads the scope id onto native element props
+    expect(code).toMatch(/data-v-[0-9a-f]+/);
   });
 });
 
