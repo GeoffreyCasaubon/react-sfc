@@ -1,0 +1,44 @@
+{
+  "name": "@rsfc/webpack-loader",
+  "version": "0.1.0",
+  "description": "Webpack loader for RSFC (React Single File Components)",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@rsfc/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "webpack": ">=5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": ">=18.0.0",
+    "@types/webpack": "^5.28.5",
+    "webpack": "^5.96.0"
+  }
+}
