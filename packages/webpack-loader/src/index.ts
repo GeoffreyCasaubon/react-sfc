@@ -90,14 +90,34 @@ async function compileCss(vm: VirtualModule): Promise<string> {
     try {
       sass = await import("sass");
     } catch {
-      throw new Error(
-        `[rsfc] Install the "sass" package to use <style lang="scss/sass"> blocks.`
-      );
+      throw new Error('[rsfc] Install "sass" to use <style lang="scss/sass"> blocks.');
     }
     const syntax = vm.id.endsWith(".sass") ? "indented" : "scss";
     const result = await sass.compileStringAsync(vm.code, { syntax });
     return result.css;
   }
+
+  if (vm.id.endsWith(".less")) {
+    let less: typeof import("less");
+    try {
+      less = await import("less");
+    } catch {
+      throw new Error('[rsfc] Install "less" to use <style lang="less"> blocks.');
+    }
+    const result = await less.default.render(vm.code);
+    return result.css;
+  }
+
+  if (vm.id.endsWith(".styl") || vm.id.endsWith(".stylus")) {
+    let stylus: { default: { render: (s: string) => string } };
+    try {
+      stylus = await import("stylus") as typeof stylus;
+    } catch {
+      throw new Error('[rsfc] Install "stylus" to use <style lang="stylus/styl"> blocks.');
+    }
+    return stylus.default.render(vm.code);
+  }
+
   return vm.code;
 }
 

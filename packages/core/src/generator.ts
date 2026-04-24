@@ -28,6 +28,12 @@ function vlq(n: number): string {
 /**
  * Encode one source-mapped segment.
  * All four values are absolute; the encoder tracks and outputs deltas.
+ * Returns the VLQ string for one segment within a mappings group.
+ *
+ * @param state   - mutable tracker of previous source position across all lines
+ * @param genCol  - absolute generated column within the current line
+ * @param srcLine - absolute source line
+ * @param srcCol  - absolute source column
  */
 interface MappingState {
   prevSrcLine: number;
@@ -36,15 +42,16 @@ interface MappingState {
 
 function segment(
   state: MappingState,
+  genCol: number,
   srcLine: number,
-  srcCol: number
+  srcCol: number,
 ): string {
   const dLine = srcLine - state.prevSrcLine;
   const dCol = srcCol - state.prevSrcCol;
   state.prevSrcLine = srcLine;
   state.prevSrcCol = srcCol;
-  // genCol=0 (always start of line), srcIdx=0 (single source file), dLine, dCol
-  return vlq(0) + vlq(0) + vlq(dLine) + vlq(dCol);
+  // genCol is always the first field; srcIdx=0 (single source file)
+  return vlq(genCol) + vlq(0) + vlq(dLine) + vlq(dCol);
 }
 
 // ---------------------------------------------------------------------------
@@ -53,7 +60,7 @@ function segment(
 
 interface Builder {
   lines: string[];
-  /** One mappings entry per output line ("" = no source mapping). */
+  /** One mappings group per output line (segments joined by ",", or "" for boilerplate). */
   mappingEntries: string[];
   state: MappingState;
 }
@@ -72,15 +79,47 @@ function pushBoilerplate(b: Builder, line: string): void {
   b.mappingEntries.push("");
 }
 
-/** Append a source line with a mapping back to (srcLine, srcCol). */
+/**
+ * Append a source line and emit one segment per non-whitespace token for
+ * column-level accuracy.
+ *
+ * @param line       - full generated line (including any added indentation)
+ * @param srcLine    - 0-based source line of the content
+ * @param srcCol     - 0-based source column where the content begins (usually 0)
+ * @param genColBase - generated column where content starts (added-indentation width)
+ */
 function pushMapped(
   b: Builder,
   line: string,
   srcLine: number,
-  srcCol = 0
+  srcCol = 0,
+  genColBase = 0,
 ): void {
   b.lines.push(line);
-  b.mappingEntries.push(segment(b.state, srcLine, srcCol));
+
+  // Walk the content portion of the line and emit a segment at every token start.
+  // Since the content is a verbatim copy of the source (just shifted by genColBase),
+  // token at generated column (genColBase + j) maps to source column (srcCol + j).
+  const content = line.slice(genColBase);
+  const segs: string[] = [];
+  let prevGenColInLine = 0; // relative within this line (resets at each ';' separator)
+  let inWord = false;
+
+  for (let j = 0; j < content.length; j++) {
+    const ch = content[j]!;
+    const isWord = ch > " "; // faster than regex for ASCII
+
+    if (isWord && !inWord) {
+      const genCol = genColBase + j;
+      const tokenSrcCol = srcCol + j;
+
+      segs.push(segment(b.state, genCol - prevGenColInLine, srcLine, tokenSrcCol));
+      prevGenColInLine = genCol;
+    }
+    inWord = isWord;
+  }
+
+  b.mappingEntries.push(segs.join(","));
 }
 
 // ---------------------------------------------------------------------------
@@ -292,7 +331,7 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
 
     // Setup body (non-import declarations, hooks, etc.)
     for (const { text, srcLine } of setupBody) {
-      pushMapped(b, "  " + text, srcLine, 0);
+      pushMapped(b, "  " + text, srcLine, 0, 2);
     }
 
     // clientScript inside the function when setup is present
@@ -301,7 +340,7 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
       const contentLines = content.split("\n");
       for (let i = 0; i < contentLines.length; i++) {
         const line = contentLines[i] ?? "";
-        pushMapped(b, "  " + line, loc.start.line + i, 0);
+        pushMapped(b, "  " + line, loc.start.line + i, 0, 2);
       }
     }
 
@@ -311,7 +350,7 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
       const templateLines = content.split("\n");
       for (let i = 0; i < templateLines.length; i++) {
         const line = templateLines[i] ?? "";
-        pushMapped(b, "    " + line, loc.start.line + i, 0);
+        pushMapped(b, "    " + line, loc.start.line + i, 0, 4);
       }
       pushBoilerplate(b, "  );");
     }

@@ -166,6 +166,25 @@ describe("style blocks — inline injection", () => {
     expect(code).toContain("color: blue");
     expect(code).not.toContain("\0rsfc:style");
   });
+
+  it("compiles less blocks before injecting", async () => {
+    // LESS variables: @primary gets resolved to its value
+    const source = '<style lang="less">@primary: red; .btn { color: @primary; }</style>';
+    const { code } = await runLoader(source, "/a.rsfc");
+    expect(code).toContain(".btn");
+    expect(code).toContain("red");
+    expect(code).not.toContain("@primary");
+    expect(code).not.toContain("\0rsfc:style");
+  });
+
+  it("compiles stylus blocks before injecting", async () => {
+    // Stylus indented syntax — Stylus resolves named colors to hex (#00f for blue)
+    const source = '<style lang="styl">.card\n  color blue</style>';
+    const { code } = await runLoader(source, "/a.rsfc");
+    expect(code).toContain(".card");
+    expect(code).toMatch(/#00f|blue/);
+    expect(code).not.toContain("\0rsfc:style");
+  });
 });
 
 // ---------------------------------------------------------------------------

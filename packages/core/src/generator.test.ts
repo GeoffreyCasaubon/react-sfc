@@ -474,7 +474,6 @@ describe("source map mappings", () => {
   it("mappings string is non-empty when there is content to map", () => {
     const source = src("<script>", "const x = 1", "</script>");
     const { map } = parseAndGenerate(source);
-    // At minimum there should be semicolons (line separators)
     expect(map.mappings.length).toBeGreaterThan(0);
   });
 
@@ -483,7 +482,126 @@ describe("source map mappings", () => {
     const { map, code } = parseAndGenerate(source);
     const generatedLineCount = code.split("\n").length;
     const separatorCount = map.mappings.split(";").length;
-    // mappings.split(";").length === number of generated lines
     expect(separatorCount).toBe(generatedLineCount);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Column-level source maps
+// ---------------------------------------------------------------------------
+
+/** Decode a single VLQ base64 value (returns the signed integer). */
+function decodeVlq(str: string, pos: { i: number }): number {
+  const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  let result = 0;
+  let shift = 0;
+  let digit: number;
+  do {
+    const ch = str[pos.i++]!;
+    digit = B64.indexOf(ch);
+    result |= (digit & 0x1f) << shift;
+    shift += 5;
+  } while (digit & 0x20);
+  // sign bit is the lowest bit
+  return (result & 1) ? -(result >> 1) : (result >> 1);
+}
+
+/** Parse all segments from a mappings string into [genCol, srcFile, srcLine, srcCol][] per line. */
+function parseMappings(mappings: string): Array<Array<[number, number, number, number]>> {
+  const lines = mappings.split(";");
+  // V3 spec: genCol resets to 0 at each line boundary, but srcLine/srcCol
+  // accumulate across all lines (they are always deltas from the previous segment).
+  let prevSrcLine = 0, prevSrcCol = 0;
+  return lines.map((group) => {
+    if (!group) return [];
+    const segs = group.split(",");
+    let prevGenCol = 0;
+    return segs.map((seg) => {
+      const pos = { i: 0 };
+      const genColDelta = decodeVlq(seg, pos);
+      const srcFile = decodeVlq(seg, pos);
+      const srcLineDelta = decodeVlq(seg, pos);
+      const srcColDelta = decodeVlq(seg, pos);
+      const genCol = prevGenCol + genColDelta;
+      const srcLine = prevSrcLine + srcLineDelta;
+      const srcCol = prevSrcCol + srcColDelta;
+      prevGenCol = genCol;
+      prevSrcLine = srcLine;
+      prevSrcCol = srcCol;
+      return [genCol, srcFile, srcLine, srcCol] as [number, number, number, number];
+    });
+  });
+}
+
+describe("column-level source maps", () => {
+  it("emits multiple segments per line for multi-token script content", () => {
+    const source = src("<script>", "const x = 1", "</script>");
+    const { map, code } = parseAndGenerate(source);
+    const codeLines = code.split("\n");
+    // Find the generated line containing "const x = 1"
+    const lineIdx = codeLines.findIndex((l) => l.includes("const"));
+    expect(lineIdx).toBeGreaterThanOrEqual(0);
+    const allSegs = parseMappings(map.mappings);
+    const segsOnLine = allSegs[lineIdx]!;
+    // Should have segments for "const", "x", "=", "1" → at least 4
+    expect(segsOnLine.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("maps token columns correctly for script lines (no indentation)", () => {
+    // "const x = 1" in source (srcLine for this content = line 1, col 0)
+    const source = src("<script>", "const x = 1", "</script>");
+    const { map, code } = parseAndGenerate(source);
+    const codeLines = code.split("\n");
+    const lineIdx = codeLines.findIndex((l) => l.trim() === "const x = 1");
+    const allSegs = parseMappings(map.mappings);
+    const segsOnLine = allSegs[lineIdx]!;
+
+    // "const" → genCol=0, srcCol=0
+    expect(segsOnLine[0]?.[0]).toBe(0);  // genCol
+    expect(segsOnLine[0]?.[3]).toBe(0);  // srcCol
+
+    // "x" is 6 chars after "const " → genCol=6, srcCol=6
+    expect(segsOnLine[1]?.[0]).toBe(6);
+    expect(segsOnLine[1]?.[3]).toBe(6);
+  });
+
+  it("maps token columns correctly for template lines (4-space indent)", () => {
+    const source = src("<template>", "const x = 1", "</template>");
+    const { map, code } = parseAndGenerate(source);
+    const codeLines = code.split("\n");
+    // Generated line is "    const x = 1" (4 spaces indent)
+    const lineIdx = codeLines.findIndex((l) => l.startsWith("    const"));
+    expect(lineIdx).toBeGreaterThanOrEqual(0);
+    const allSegs = parseMappings(map.mappings);
+    const segsOnLine = allSegs[lineIdx]!;
+
+    // "const" at generated col 4 → source col 0
+    expect(segsOnLine[0]?.[0]).toBe(4);  // genCol
+    expect(segsOnLine[0]?.[3]).toBe(0);  // srcCol
+
+    // "x" at generated col 10 → source col 6
+    expect(segsOnLine[1]?.[0]).toBe(10);
+    expect(segsOnLine[1]?.[3]).toBe(6);
+  });
+
+  it("maps token columns correctly for script setup body (2-space indent)", () => {
+    const source = src(
+      "<script setup>",
+      "import { useState } from 'react'",
+      "const count = 0",
+      "</script>",
+      "<template><div/></template>"
+    );
+    const { map, code } = parseAndGenerate(source);
+    const codeLines = code.split("\n");
+    // Setup body line: "  const count = 0"
+    const lineIdx = codeLines.findIndex((l) => l.startsWith("  const count"));
+    expect(lineIdx).toBeGreaterThanOrEqual(0);
+    const allSegs = parseMappings(map.mappings);
+    const segsOnLine = allSegs[lineIdx]!;
+
+    // "const" at genCol=2 → srcCol=0
+    expect(segsOnLine[0]?.[0]).toBe(2);
+    expect(segsOnLine[0]?.[3]).toBe(0);
   });
 });
