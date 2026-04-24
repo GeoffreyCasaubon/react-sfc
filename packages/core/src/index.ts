@@ -8,6 +8,9 @@ export type {
   RawSourceMap,
   VirtualModule,
   GeneratedOutput,
+  SourcePosition,
+  SourceLocation,
+  StyleBlock,
 } from "./types.js";
 
 export { parse } from "./parser.js";

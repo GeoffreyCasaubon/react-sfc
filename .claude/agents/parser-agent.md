@@ -26,7 +26,7 @@ RsfcDescriptor {
 ## Rules
 - 100% unit test coverage in `packages/core/src/parser.test.ts` before any implementation ships
 - Never throw — return a descriptor with an `errors` array instead
-- `startLine` = 0-based line of first character of block *content* (not the opening tag)
+- `loc.start` = position of the first character of block *content* (not the opening tag); line is 0-based
 - Block `content` excludes the opening and closing tags themselves
 - No external runtime dependencies — use only built-in Node.js APIs or hand-rolled parsing
 

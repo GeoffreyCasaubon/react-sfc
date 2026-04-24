@@ -1,4 +1,5 @@
 import type { Plugin, TransformResult } from "vite";
+import { transformWithEsbuild } from "vite";
 import { parse, generate } from "@rsfc/core";
 
 export interface RsfcPluginOptions {
@@ -14,6 +15,34 @@ export interface RsfcPluginOptions {
   exclude?: string[] | undefined;
 }
 
+// Converts a simple glob pattern (*, **, ?) to a RegExp.
+// Handles the common Vite plugin include/exclude cases without extra deps.
+function globToRegex(pattern: string): RegExp {
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*\*/g, "\x00")
+    .replace(/\*/g, "[^/]*")
+    .replace(/\x00/g, ".*")
+    .replace(/\?/g, "[^/]");
+  return new RegExp(`(?:^|/)${escaped}(?:$|[?#])`);
+}
+
+function makeFilter(
+  include: string[] | undefined,
+  exclude: string[] | undefined,
+): (id: string) => boolean {
+  const includeRe = include?.map(globToRegex);
+  const excludeRe = exclude?.map(globToRegex);
+
+  return (id: string) => {
+    const clean = id.split("?")[0]!;
+
+    if (excludeRe?.some((re) => re.test(clean))) return false;
+    if (includeRe) return includeRe.some((re) => re.test(clean));
+    return clean.endsWith(".rsfc");
+  };
+}
+
 /**
  * Vite plugin for React Single File Components.
  *
@@ -24,10 +53,11 @@ export interface RsfcPluginOptions {
  * export default defineConfig({ plugins: [rsfc()] });
  * ```
  */
-export default function rsfc(_options: RsfcPluginOptions = {}): Plugin {
+export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
   // Per-instance cache: virtual module id → CSS code.
   // Populated during transform, consumed by resolveId + load.
   const virtualModuleCache = new Map<string, string>();
+  const filter = makeFilter(options.include, options.exclude);
 
   return {
     name: "vite-plugin-rsfc",
@@ -43,8 +73,8 @@ export default function rsfc(_options: RsfcPluginOptions = {}): Plugin {
       return code !== undefined ? { code } : null;
     },
 
-    transform(code, id): TransformResult | null {
-      if (!id.endsWith(".rsfc")) return null;
+    async transform(code, id): Promise<TransformResult | null> {
+      if (!filter(id)) return null;
 
       const descriptor = parse(code, { filename: id });
 
@@ -60,15 +90,17 @@ export default function rsfc(_options: RsfcPluginOptions = {}): Plugin {
         virtualModuleCache.set(vm.id, vm.code);
       }
 
-      // Rollup 4 types SourceMapInput as a class with toUrl(), but at runtime
-      // Vite accepts any plain V3 source map object. Cast to bypass the type mismatch.
-      // sourcesContent: convert (string | null)[] → string[] as Rollup expects.
-      const map = {
-        ...output.map,
-        sourcesContent: (output.map.sourcesContent ?? []).map((s) => s ?? ""),
-      };
+      // Strip TypeScript and transform JSX via esbuild. Using a synthetic .tsx
+      // filename so esbuild applies both TS stripping and JSX transformation,
+      // which it would skip for the raw .rsfc id.
+      const stripped = await transformWithEsbuild(output.code, id + ".tsx", {
+        loader: "tsx",
+        target: "esnext",
+        jsx: "automatic",
+        sourcefile: id,
+      });
 
-      return { code: output.code, map } as unknown as TransformResult;
+      return { code: stripped.code, map: stripped.map } as unknown as TransformResult;
     },
   };
 }
