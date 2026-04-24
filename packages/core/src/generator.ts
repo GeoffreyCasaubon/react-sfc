@@ -92,7 +92,8 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
 
   // -- Style imports (one per style block, in order) -----------------------
   for (let i = 0; i < descriptor.styles.length; i++) {
-    const id = styleVirtualId(descriptor.filename, i);
+    const style = descriptor.styles[i]!;
+    const id = styleVirtualId(descriptor.filename, i, style.lang);
     // Use a template literal instead of JSON.stringify so the \0 null char
     // is preserved verbatim — bundlers (Vite/Rollup) intercept these IDs
     // in memory and never write them to disk.
@@ -145,7 +146,7 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
 
   const virtualModules: VirtualModule[] = descriptor.styles.map(
     (style, i) => ({
-      id: styleVirtualId(descriptor.filename, i),
+      id: styleVirtualId(descriptor.filename, i, style.lang),
       code: style.content,
     })
   );
@@ -153,6 +154,7 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
   return { code, map, virtualModules };
 }
 
-function styleVirtualId(filename: string, index: number): string {
-  return `\0rsfc:style:${filename}:${index}`;
+function styleVirtualId(filename: string, index: number, lang?: string): string {
+  const ext = lang && lang !== "css" ? `.${lang}` : "";
+  return `\0rsfc:style:${filename}:${index}${ext}`;
 }

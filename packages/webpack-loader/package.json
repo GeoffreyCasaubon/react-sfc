@@ -34,7 +34,11 @@
     "@rsfc/core": "workspace:*"
   },
   "peerDependencies": {
-    "webpack": ">=5.0.0"
+    "webpack": ">=5.0.0",
+    "sass": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "sass": { "optional": true }
   },
   "devDependencies": {
     "@types/node": ">=18.0.0",

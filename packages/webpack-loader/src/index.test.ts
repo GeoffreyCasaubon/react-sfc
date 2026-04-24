@@ -141,11 +141,29 @@ describe("style blocks — inline injection", () => {
   it("injects all style blocks when there are multiple", async () => {
     const source = [
       "<style>.base{}</style>",
-      '<style lang="scss">.theme{}</style>',
+      "<style>.theme{}</style>",
     ].join("\n");
     const { code } = await runLoader(source, "/a.rsfc");
     expect(code).toContain(".base");
     expect(code).toContain(".theme");
+    expect(code).not.toContain("\0rsfc:style");
+  });
+
+  it("compiles scss blocks before injecting", async () => {
+    // SCSS nesting: .parent { .child {} } → .parent .child {} after compilation
+    const source = '<style lang="scss">.parent { .child { color: red; } }</style>';
+    const { code } = await runLoader(source, "/a.rsfc");
+    // Compiled output must contain the selector (nested → flat), not raw SCSS
+    expect(code).toContain(".parent");
+    expect(code).toContain(".child");
+    expect(code).not.toContain("\0rsfc:style");
+  });
+
+  it("compiles sass (indented syntax) blocks before injecting", async () => {
+    const source = '<style lang="sass">.box\n  color: blue</style>';
+    const { code } = await runLoader(source, "/a.rsfc");
+    expect(code).toContain(".box");
+    expect(code).toContain("color: blue");
     expect(code).not.toContain("\0rsfc:style");
   });
 });

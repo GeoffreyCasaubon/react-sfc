@@ -46,7 +46,7 @@ export default function rsfcLoader(
 
       // Webpack has no native virtual-module API, so we replace each
       // \0rsfc:style import with an inline style-injection IIFE.
-      const code = injectStyles(output.code, output.virtualModules);
+      const code = await injectStyles(output.code, output.virtualModules);
 
       // Pass the V3 source map as the third callback argument.
       // Webpack accepts plain V3 objects here (the class-based type is a Rollup
@@ -66,18 +66,39 @@ export default function rsfcLoader(
  * Replace each `import "<\0>rsfc:style:…";` emitted by the generator with an
  * inline IIFE that appends a `<style>` element to the document.
  *
+ * For `.scss`/`.sass` virtual modules the raw source is compiled with Dart Sass
+ * before injection. `sass` must be installed by the consumer.
+ *
  * The `typeof document !== 'undefined'` guard makes this SSR-safe: on the
  * server the injection is skipped without throwing.
  */
-function injectStyles(code: string, virtualModules: VirtualModule[]): string {
+async function injectStyles(code: string, virtualModules: VirtualModule[]): Promise<string> {
   let result = code;
   for (let i = 0; i < virtualModules.length; i++) {
     const vm = virtualModules[i];
     if (vm === undefined) continue;
     const importStatement = `import "${vm.id}";`;
-    result = result.replace(importStatement, buildStyleIIFE(vm.code, i));
+    const css = await compileCss(vm);
+    result = result.replace(importStatement, buildStyleIIFE(css, i));
   }
   return result;
+}
+
+async function compileCss(vm: VirtualModule): Promise<string> {
+  if (vm.id.endsWith(".scss") || vm.id.endsWith(".sass")) {
+    let sass: typeof import("sass");
+    try {
+      sass = await import("sass");
+    } catch {
+      throw new Error(
+        `[rsfc] Install the "sass" package to use <style lang="scss/sass"> blocks.`
+      );
+    }
+    const syntax = vm.id.endsWith(".sass") ? "indented" : "scss";
+    const result = await sass.compileStringAsync(vm.code, { syntax });
+    return result.css;
+  }
+  return vm.code;
 }
 
 function buildStyleIIFE(css: string, index: number): string {

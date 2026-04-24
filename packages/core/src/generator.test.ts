@@ -165,10 +165,18 @@ describe("style virtual modules", () => {
     );
     const { virtualModules } = parseAndGenerate(source, "/a.rsfc");
     expect(virtualModules).toHaveLength(2);
+    // Plain CSS block — no extension suffix
     expect(virtualModules[0]?.id).toBe("\0rsfc:style:/a.rsfc:0");
-    expect(virtualModules[1]?.id).toBe("\0rsfc:style:/a.rsfc:1");
+    // SCSS block — lang appended so the bundler pipeline can detect the preprocessor
+    expect(virtualModules[1]?.id).toBe("\0rsfc:style:/a.rsfc:1.scss");
     expect(virtualModules[0]?.code).toContain(".base");
     expect(virtualModules[1]?.code).toContain(".theme");
+  });
+
+  it("appends lang extension to virtual module id for preprocessed styles", () => {
+    const source = src('<style lang="sass">.foo\n  color: red</style>');
+    const { virtualModules } = parseAndGenerate(source, "/a.rsfc");
+    expect(virtualModules[0]?.id).toBe("\0rsfc:style:/a.rsfc:0.sass");
   });
 
   it("generated code imports each style virtual module", () => {

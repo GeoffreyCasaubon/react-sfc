@@ -162,6 +162,15 @@ describe("transform — generated code", () => {
     expect(result.code).toContain("export default");
   });
 
+  it("registers scss virtual modules with .scss extension id", async () => {
+    const plugin = rsfcPlugin();
+    await callTransform(plugin, '<style lang="scss">.foo{}</style>', "/comp.rsfc");
+    const scssId = "\0rsfc:style:/comp.rsfc:0.scss";
+    expect(callResolveId(plugin, scssId)).toBe(scssId);
+    const result = callLoad(plugin, scssId) as { code: string };
+    expect(result.code).toContain(".foo");
+  });
+
   it("strips TypeScript type annotations from script lang=ts blocks", async () => {
     const plugin = rsfcPlugin();
     const source = src(
