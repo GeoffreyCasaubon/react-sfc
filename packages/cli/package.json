@@ -1,6 +1,6 @@
 {
   "name": "@rsfc/cli",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "CLI for React Single File Components — compile and inspect .rsfc files",
   "license": "MIT",
   "type": "module",
@@ -15,7 +15,9 @@
       "import": "./dist/compile.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -33,9 +35,15 @@
     "stylus": ">=0.60.0"
   },
   "peerDependenciesMeta": {
-    "sass": { "optional": true },
-    "less": { "optional": true },
-    "stylus": { "optional": true }
+    "sass": {
+      "optional": true
+    },
+    "less": {
+      "optional": true
+    },
+    "stylus": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": ">=18.0.0"
