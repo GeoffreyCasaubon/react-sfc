@@ -25,6 +25,8 @@ const EMPTY_DESCRIPTOR: RsfcDescriptor = {
   clientScript: null,
   template: null,
   styles: [],
+  docs: null,
+  customBlocks: [],
   errors: [],
 };
 
@@ -483,6 +485,40 @@ describe("source map mappings", () => {
     const generatedLineCount = code.split("\n").length;
     const separatorCount = map.mappings.split(";").length;
     expect(separatorCount).toBe(generatedLineCount);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// <docs> block and custom blocks — generator ignores them
+// ---------------------------------------------------------------------------
+
+describe("docs and custom blocks — generator ignores them", () => {
+  it("<docs> block does not affect generated code", () => {
+    const { code } = parseAndGenerate(
+      "<docs># My Component\nSome docs.</docs><script>export const x = 1</script>"
+    );
+    expect(code).toContain("x = 1");
+    expect(code).not.toContain("My Component");
+    expect(code).not.toContain("docs");
+  });
+
+  it("<docs> block does not produce virtual modules", () => {
+    const { virtualModules } = parseAndGenerate("<docs>Some docs</docs>");
+    expect(virtualModules).toHaveLength(0);
+  });
+
+  it("custom blocks do not appear in generated code", () => {
+    const { code } = parseAndGenerate(
+      "<graphql>{ user { id } }</graphql><script>export const x = 1</script>"
+    );
+    expect(code).toContain("x = 1");
+    expect(code).not.toContain("graphql");
+    expect(code).not.toContain("user");
+  });
+
+  it("custom blocks do not produce virtual modules", () => {
+    const { virtualModules } = parseAndGenerate("<i18n>{ en: 'Hello' }</i18n>");
+    expect(virtualModules).toHaveLength(0);
   });
 });
 

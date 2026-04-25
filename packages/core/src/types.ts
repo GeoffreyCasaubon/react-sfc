@@ -34,7 +34,7 @@ export interface SourceLocation {
 // Descriptor types — produced by the parser
 // ---------------------------------------------------------------------------
 
-export type RsfcBlockKind = "script" | "clientScript" | "template" | "style";
+export type RsfcBlockKind = "script" | "clientScript" | "template" | "style" | "docs";
 
 export interface RsfcBlock {
   kind: RsfcBlockKind;
@@ -57,6 +57,22 @@ export interface RsfcParseError {
   loc: SourceLocation;
 }
 
+/**
+ * A block whose tag name is not part of the core RSFC spec.
+ * Plugins can process these via `customBlockTransforms` options.
+ *
+ * Examples: `<graphql>`, `<i18n>`, `<story>`, …
+ */
+export interface CustomBlock {
+  kind: "custom";
+  /** The exact tag name as written (case-sensitive). */
+  tag: string;
+  content: string;
+  lang?: string | undefined;
+  loc: SourceLocation;
+  attrs: Record<string, string | true>;
+}
+
 export interface RsfcDescriptor {
   filename: string;
   source: string;
@@ -72,6 +88,13 @@ export interface RsfcDescriptor {
   template: RsfcBlock | null;
   /** Zero or more style blocks, in source order. */
   styles: StyleBlock[];
+  /** <docs> — optional documentation block. Ignored by the code generator. */
+  docs: RsfcBlock | null;
+  /**
+   * Blocks with unrecognized tag names.
+   * Plugins can transform these via a `customBlockTransforms` option.
+   */
+  customBlocks: CustomBlock[];
   errors: RsfcParseError[];
 }
 

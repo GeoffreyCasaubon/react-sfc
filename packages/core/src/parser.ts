@@ -1,4 +1,5 @@
 import type {
+  CustomBlock,
   RsfcBlock,
   RsfcBlockKind,
   RsfcDescriptor,
@@ -8,8 +9,10 @@ import type {
   StyleBlock,
 } from "./types.js";
 
-const KNOWN_BLOCK_KINDS = ["script", "clientScript", "template", "style"] as const;
-const OPEN_TAG_SRC = `<(${KNOWN_BLOCK_KINDS.join("|")})((?:\\s[^>]*)?)>`;
+// Match any tag that looks like a component-style block: starts with a letter,
+// followed by alphanumeric characters. This captures known kinds, <docs>, and
+// arbitrary custom blocks (<graphql>, <i18n>, etc.).
+const OPEN_TAG_SRC = `<([a-zA-Z][a-zA-Z0-9]*)((?:\\s[^>]*)?)>`;
 const ATTR_RE = /(\w[\w:-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/g;
 
 /** Compute line, column, and offset for an index within `source`. */
@@ -71,6 +74,8 @@ export function parse(
     clientScript: null,
     template: null,
     styles: [],
+    docs: null,
+    customBlocks: [],
     errors: [],
   };
 
@@ -79,7 +84,7 @@ export function parse(
 
   let match: RegExpExecArray | null;
   while ((match = openTagRe.exec(source)) !== null) {
-    const tagName = match[1] as RsfcBlockKind;
+    const tagName = match[1]!;
     const attrsStr = match[2] as string;
     const openTagEnd = match.index + match[0].length;
 
@@ -98,18 +103,10 @@ export function parse(
     const loc = locAt(source, openTagEnd, closeIdx);
     const { lang, attrs } = parseAttrs(attrsStr);
 
-    const block: RsfcBlock = {
-      kind: tagName,
-      content,
-      loc,
-      attrs,
-      ...(lang !== undefined ? { lang } : {}),
-    };
-
     switch (tagName) {
-      case "script":
+      case "script": {
+        const block: RsfcBlock = { kind: "script", content, loc, attrs, ...(lang !== undefined ? { lang } : {}) };
         if ("setup" in attrs) {
-          // <script setup> — component setup block
           if (descriptor.scriptSetup !== null) {
             errors.push({ message: "Duplicate <script setup> block", loc });
           } else {
@@ -123,23 +120,51 @@ export function parse(
           }
         }
         break;
-      case "clientScript":
+      }
+      case "clientScript": {
+        const block: RsfcBlock = { kind: "clientScript", content, loc, attrs, ...(lang !== undefined ? { lang } : {}) };
         if (descriptor.clientScript !== null) {
           errors.push({ message: "Duplicate <clientScript> block", loc });
         } else {
           descriptor.clientScript = block;
         }
         break;
-      case "template":
+      }
+      case "template": {
+        const block: RsfcBlock = { kind: "template", content, loc, attrs, ...(lang !== undefined ? { lang } : {}) };
         if (descriptor.template !== null) {
           errors.push({ message: "Duplicate <template> block", loc });
         } else {
           descriptor.template = block;
         }
         break;
-      case "style":
+      }
+      case "style": {
+        const block: RsfcBlock = { kind: "style", content, loc, attrs, ...(lang !== undefined ? { lang } : {}) };
         descriptor.styles.push(block as StyleBlock);
         break;
+      }
+      case "docs": {
+        const block: RsfcBlock = { kind: "docs", content, loc, attrs, ...(lang !== undefined ? { lang } : {}) };
+        if (descriptor.docs !== null) {
+          errors.push({ message: "Duplicate <docs> block", loc });
+        } else {
+          descriptor.docs = block;
+        }
+        break;
+      }
+      default: {
+        const customBlock: CustomBlock = {
+          kind: "custom",
+          tag: tagName,
+          content,
+          loc,
+          attrs,
+          ...(lang !== undefined ? { lang } : {}),
+        };
+        descriptor.customBlocks.push(customBlock);
+        break;
+      }
     }
 
     // Skip past the closing tag so nested tags inside block content

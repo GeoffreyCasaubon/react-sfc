@@ -428,3 +428,93 @@ describe("<script setup>", () => {
     expect(result.scriptSetup).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// <docs> block
+// ---------------------------------------------------------------------------
+
+describe("<docs> block", () => {
+  it("captures docs content in descriptor.docs", () => {
+    const result = parse("<docs># My Component\nA description.</docs>", { filename: "a.rsfc" });
+    expect(result.docs).not.toBeNull();
+    expect(result.docs?.kind).toBe("docs");
+    expect(result.docs?.content).toContain("My Component");
+  });
+
+  it("docs block does not generate errors for normal use", () => {
+    const result = parse("<docs>Some docs</docs>", { filename: "a.rsfc" });
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("duplicate <docs> blocks generate an error, first wins", () => {
+    const source = src("<docs>first</docs>", "<docs>second</docs>");
+    const result = parse(source, { filename: "a.rsfc" });
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]?.message).toMatch(/[Dd]uplicate.*docs/i);
+    expect(result.docs?.content).toBe("first");
+  });
+
+  it("docs block coexists with other blocks", () => {
+    const source = src(
+      "<script>export const x = 1</script>",
+      "<docs># Docs</docs>",
+      "<template><div/></template>"
+    );
+    const result = parse(source, { filename: "a.rsfc" });
+    expect(result.script).not.toBeNull();
+    expect(result.docs).not.toBeNull();
+    expect(result.template).not.toBeNull();
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("docs: null when no <docs> block present", () => {
+    const result = parse("<script>x</script>", { filename: "a.rsfc" });
+    expect(result.docs).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Custom blocks
+// ---------------------------------------------------------------------------
+
+describe("custom blocks", () => {
+  it("captures unrecognized block in customBlocks array", () => {
+    const result = parse("<graphql>{ user { id } }</graphql>", { filename: "a.rsfc" });
+    expect(result.customBlocks).toHaveLength(1);
+    expect(result.customBlocks[0]?.tag).toBe("graphql");
+    expect(result.customBlocks[0]?.kind).toBe("custom");
+  });
+
+  it("custom block content is accessible", () => {
+    const result = parse("<i18n>{ en: 'Hello' }</i18n>", { filename: "a.rsfc" });
+    expect(result.customBlocks[0]?.content).toBe("{ en: 'Hello' }");
+  });
+
+  it("multiple custom blocks are captured in source order", () => {
+    const source = src(
+      "<graphql>query A {}</graphql>",
+      "<i18n>{ en: 'Hi' }</i18n>"
+    );
+    const result = parse(source, { filename: "a.rsfc" });
+    expect(result.customBlocks).toHaveLength(2);
+    expect(result.customBlocks[0]?.tag).toBe("graphql");
+    expect(result.customBlocks[1]?.tag).toBe("i18n");
+  });
+
+  it("custom block lang attribute is accessible", () => {
+    const result = parse('<story lang="jsx">const s = {}</story>', { filename: "a.rsfc" });
+    expect(result.customBlocks[0]?.lang).toBe("jsx");
+  });
+
+  it("multiple custom blocks with the same tag are all captured (no duplicate error)", () => {
+    const source = src("<graphql>query A {}</graphql>", "<graphql>query B {}</graphql>");
+    const result = parse(source, { filename: "a.rsfc" });
+    expect(result.customBlocks).toHaveLength(2);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("customBlocks is empty when no custom blocks are present", () => {
+    const result = parse("<script>x</script>", { filename: "a.rsfc" });
+    expect(result.customBlocks).toHaveLength(0);
+  });
+});

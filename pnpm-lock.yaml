@@ -33,6 +33,25 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.17)(less@4.6.4)(sass@1.99.0)(stylus@0.64.0)(terser@5.46.2)
 
+  packages/cli:
+    dependencies:
+      '@rsfc/core':
+        specifier: workspace:*
+        version: link:../core
+      less:
+        specifier: '>=4.0.0'
+        version: 4.6.4
+      sass:
+        specifier: '>=1.0.0'
+        version: 1.99.0
+      stylus:
+        specifier: '>=0.60.0'
+        version: 0.64.0
+    devDependencies:
+      '@types/node':
+        specifier: '>=18.0.0'
+        version: 22.19.17
+
   packages/core:
     devDependencies:
       '@types/node':
@@ -112,9 +131,15 @@ importers:
       '@rsfc/core':
         specifier: workspace:*
         version: link:../core
+      less:
+        specifier: '>=4.0.0'
+        version: 4.6.4
       sass:
         specifier: '>=1.0.0'
         version: 1.99.0
+      stylus:
+        specifier: '>=0.60.0'
+        version: 0.64.0
     devDependencies:
       '@types/node':
         specifier: '>=18.0.0'
@@ -128,9 +153,15 @@ importers:
       '@rsfc/core':
         specifier: workspace:*
         version: link:../core
+      less:
+        specifier: '>=4.0.0'
+        version: 4.6.4
       sass:
         specifier: '>=1.0.0'
         version: 1.99.0
+      stylus:
+        specifier: '>=0.60.0'
+        version: 0.64.0
     devDependencies:
       '@types/node':
         specifier: '>=18.0.0'

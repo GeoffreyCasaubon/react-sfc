@@ -227,6 +227,73 @@ describe("transform — generated code", () => {
 });
 
 // ---------------------------------------------------------------------------
+// transform — docs and custom blocks
+// ---------------------------------------------------------------------------
+
+describe("transform — docs and custom blocks", () => {
+  it("ignores <docs> blocks (no output, no error)", async () => {
+    const plugin = rsfcPlugin();
+    const result = await callTransform(
+      plugin,
+      "<docs># Component\nSome docs.</docs><script>export const x = 1</script>",
+      "/a.rsfc"
+    );
+    expect(result).not.toBeNull();
+    const code = (result as { code: string }).code;
+    expect(code).toContain("x = 1");
+    expect(code).not.toContain("My Component");
+  });
+
+  it("ignores custom blocks when no transform is registered", async () => {
+    const plugin = rsfcPlugin();
+    const result = await callTransform(
+      plugin,
+      "<graphql>{ user { id } }</graphql><script>export const x = 1</script>",
+      "/a.rsfc"
+    );
+    expect(result).not.toBeNull();
+    const code = (result as { code: string }).code;
+    expect(code).not.toContain("graphql");
+  });
+
+  it("invokes customBlockTransforms for matching tag names", async () => {
+    const plugin = rsfcPlugin({
+      customBlockTransforms: {
+        graphql: (block) => `export const QUERY = ${JSON.stringify(block.content)};`,
+      },
+    });
+    const result = (await callTransform(
+      plugin,
+      "<graphql>{ user { id } }</graphql>",
+      "/a.rsfc"
+    )) as { code: string };
+    expect(result.code).toContain("QUERY");
+    expect(result.code).toContain("user { id }");
+  });
+
+  it("custom block transform receives the file id", async () => {
+    const receivedIds: string[] = [];
+    const plugin = rsfcPlugin({
+      customBlockTransforms: {
+        story: (block, id) => { receivedIds.push(id); return null; },
+      },
+    });
+    await callTransform(plugin, "<story>x</story>", "/comp.rsfc");
+    expect(receivedIds).toContain("/comp.rsfc");
+  });
+
+  it("returning null from a custom block transform produces no extra output", async () => {
+    const plugin = rsfcPlugin({
+      customBlockTransforms: {
+        noop: () => null,
+      },
+    });
+    const result = (await callTransform(plugin, "<noop>ignored</noop>", "/a.rsfc")) as { code: string };
+    expect(result.code).not.toContain("ignored");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // transform — source map
 // ---------------------------------------------------------------------------
 

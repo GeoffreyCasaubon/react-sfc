@@ -11,6 +11,7 @@ export type {
   SourcePosition,
   SourceLocation,
   StyleBlock,
+  CustomBlock,
 } from "./types.js";
 
 export { parse } from "./parser.js";

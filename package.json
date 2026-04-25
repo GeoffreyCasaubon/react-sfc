@@ -8,7 +8,7 @@
   },
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "build": "pnpm --filter @rsfc/core run build && pnpm --filter @rsfc/vite-plugin --filter @rsfc/webpack-loader run build",
+    "build": "pnpm --filter @rsfc/core run build && pnpm --filter @rsfc/vite-plugin --filter @rsfc/webpack-loader --filter @rsfc/cli run build",
     "build:core": "pnpm --filter @rsfc/core run build",
     "build:vite-plugin": "pnpm --filter @rsfc/vite-plugin run build",
     "build:webpack-loader": "pnpm --filter @rsfc/webpack-loader run build",

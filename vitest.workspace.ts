@@ -39,4 +39,16 @@ export default defineWorkspace([
       passWithNoTests: true,
     },
   },
+  {
+    resolve: {
+      alias: { "@rsfc/core": coreSrc },
+    },
+    test: {
+      name: "cli",
+      root: "./packages/cli",
+      include: ["src/**/*.test.ts", "src/**/*.spec.ts"],
+      environment: "node",
+      passWithNoTests: true,
+    },
+  },
 ]);

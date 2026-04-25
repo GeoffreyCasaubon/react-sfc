@@ -1,6 +1,7 @@
 import type { Plugin, TransformResult, ModuleNode } from "vite";
 import { transformWithEsbuild } from "vite";
 import { parse, generate } from "@rsfc/core";
+import type { CustomBlock } from "@rsfc/core";
 
 export interface RsfcPluginOptions {
   /**
@@ -13,6 +14,24 @@ export interface RsfcPluginOptions {
    * @default ["node_modules/**"]
    */
   exclude?: string[] | undefined;
+  /**
+   * Map of custom block tag names to transform functions.
+   * Each function receives the block and the file id, and should return
+   * a JavaScript string to append to the module output (or null to ignore).
+   *
+   * @example
+   * ```ts
+   * rsfc({
+   *   customBlockTransforms: {
+   *     graphql: (block) => `export const QUERY = \`${block.content}\`;`,
+   *     i18n: (block, id) => `export const messages = ${block.content};`,
+   *   },
+   * })
+   * ```
+   */
+  customBlockTransforms?: {
+    [tag: string]: (block: CustomBlock, id: string) => string | null | undefined;
+  } | undefined;
 }
 
 // Converts a simple glob pattern (*, **, ?) to a RegExp.
@@ -90,10 +109,23 @@ export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
         virtualModuleCache.set(vm.id, vm.code);
       }
 
+      // Append custom block transform outputs (if any) before esbuild so
+      // TypeScript in the transform result is also stripped.
+      let extraCode = "";
+      if (options.customBlockTransforms) {
+        for (const block of descriptor.customBlocks) {
+          const fn = options.customBlockTransforms[block.tag];
+          if (fn) {
+            const result = fn(block, id);
+            if (result != null) extraCode += "\n" + result;
+          }
+        }
+      }
+
       // Strip TypeScript and transform JSX via esbuild. Using a synthetic .tsx
       // filename so esbuild applies both TS stripping and JSX transformation,
       // which it would skip for the raw .rsfc id.
-      const stripped = await transformWithEsbuild(output.code, id + ".tsx", {
+      const stripped = await transformWithEsbuild(output.code + extraCode, id + ".tsx", {
         loader: "tsx",
         target: "esnext",
         jsx: "automatic",
