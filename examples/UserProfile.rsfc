@@ -1,0 +1,154 @@
+<script setup lang="ts">
+import { useState, useEffect } from "react"
+
+interface User {
+  id: number
+  name: string
+  email: string
+  company: { name: string }
+}
+
+const [user, setUser] = useState<User | null>(null)
+const [loading, setLoading] = useState(true)
+const [error, setError] = useState<string | null>(null)
+
+useEffect(() => {
+  fetch("https://jsonplaceholder.typicode.com/users/1")
+    .then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      return r.json() as Promise<User>
+    })
+    .then((data) => { setUser(data); setLoading(false) })
+    .catch((err: Error) => { setError(err.message); setLoading(false) })
+}, [])
+</script>
+
+<template>
+<div className={styles.card}>
+  {loading && <p className={styles.state}>Loading…</p>}
+  {error && <p className={styles.error}>Error: {error}</p>}
+  {user && (
+    <div className={styles.body}>
+      <div className={styles.avatar} aria-hidden="true">
+        {user.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+      </div>
+      <div>
+        <strong className={styles.name}>{user.name}</strong>
+        <a className={styles.email} href={`mailto:${user.email}`}>{user.email}</a>
+        <span className={styles.company}>{user.company.name}</span>
+      </div>
+    </div>
+  )}
+</div>
+</template>
+
+<style module>
+.card {
+  max-width: 340px;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-family: system-ui, sans-serif;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.state,
+.error {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.error {
+  color: #dc2626;
+}
+
+.body {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #7c3aed;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.name {
+  display: block;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #111827;
+}
+
+.email {
+  display: block;
+  font-size: 0.8rem;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.email:hover {
+  text-decoration: underline;
+}
+
+.company {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+</style>
+
+<graphql>
+query GetUser($id: ID!) {
+  user(id: $id) {
+    id
+    name
+    email
+    company {
+      name
+    }
+  }
+}
+</graphql>
+
+<docs>
+# UserProfile
+
+Fetches user data asynchronously and renders a profile card.
+Includes a `<graphql>` custom block — picked up by a codegen plugin
+via `customBlockTransforms` in `vite.config.ts`.
+
+## Custom block transform (vite.config.ts)
+
+```ts
+import rsfc from "@rsfc/vite-plugin"
+import { codegen } from "./graphql-codegen-plugin"
+
+export default {
+  plugins: [
+    rsfc({
+      customBlockTransforms: {
+        graphql: (block, id) =>
+          codegen(block.content, { filename: id }),
+      },
+    }),
+  ],
+}
+```
+
+The `<graphql>` block content is passed to your codegen tool, which can
+export typed query hooks, document nodes, or operation strings.
+</docs>

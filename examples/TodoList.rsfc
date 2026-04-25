@@ -1,0 +1,190 @@
+<script setup lang="ts">
+import { useState } from "react"
+
+interface Todo {
+  id: number
+  text: string
+  done: boolean
+}
+
+let _id = 0
+
+const [todos, setTodos] = useState<Todo[]>([
+  { id: ++_id, text: "Try RSFC single-file components", done: true },
+  { id: ++_id, text: "Add <style module> to a component", done: true },
+  { id: ++_id, text: "Ship something cool", done: false },
+])
+const [input, setInput] = useState("")
+
+const add = () => {
+  const text = input.trim()
+  if (!text) return
+  setTodos((prev) => [...prev, { id: ++_id, text, done: false }])
+  setInput("")
+}
+
+const toggle = (id: number) =>
+  setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
+
+const remove = (id: number) =>
+  setTodos((prev) => prev.filter((t) => t.id !== id))
+
+const doneCount = todos.filter((t) => t.done).length
+</script>
+
+<template>
+<section className={styles.root}>
+  <h2 className={styles.heading}>Todos</h2>
+
+  <form className={styles.form} onSubmit={(e) => { e.preventDefault(); add() }}>
+    <input
+      className={styles.input}
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      placeholder="What needs doing?"
+      aria-label="New task"
+    />
+    <button className={styles.addBtn} type="submit">Add</button>
+  </form>
+
+  <ul className={styles.list} role="list">
+    {todos.map((todo) => (
+      <li key={todo.id} className={styles.item}>
+        <input
+          type="checkbox"
+          checked={todo.done}
+          onChange={() => toggle(todo.id)}
+          aria-label={`Mark "${todo.text}" ${todo.done ? "incomplete" : "done"}`}
+        />
+        <span className={todo.done ? styles.textDone : styles.text}>{todo.text}</span>
+        <button
+          className={styles.del}
+          onClick={() => remove(todo.id)}
+          aria-label={`Delete "${todo.text}"`}
+        >
+          ×
+        </button>
+      </li>
+    ))}
+  </ul>
+
+  <p className={styles.summary}>{doneCount} / {todos.length} completed</p>
+</section>
+</template>
+
+<style module>
+.root {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  font-family: system-ui, sans-serif;
+}
+
+.heading {
+  margin: 0 0 1rem;
+  font-size: 1.4rem;
+}
+
+.form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  outline-offset: 2px;
+}
+
+.addBtn {
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.addBtn:hover {
+  background: #1d4ed8;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.text {
+  flex: 1;
+  font-size: 0.95rem;
+}
+
+.textDone {
+  flex: 1;
+  font-size: 0.95rem;
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+.del {
+  background: none;
+  border: none;
+  color: #d1d5db;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0 0.2rem;
+}
+
+.del:hover {
+  color: #dc2626;
+}
+
+.summary {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: right;
+}
+</style>
+
+<docs>
+# TodoList
+
+A full CRUD todo list showcasing dynamic class binding and list rendering.
+
+## Features
+
+- Add, toggle, and delete todos
+- Completed count in footer
+- Accessible checkboxes and buttons
+
+## Usage
+
+```tsx
+import TodoList from "./TodoList.rsfc"
+
+export default function App() {
+  return <TodoList />
+}
+```
+</docs>

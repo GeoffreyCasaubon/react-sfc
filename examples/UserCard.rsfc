@@ -1,0 +1,141 @@
+<script lang="ts">
+export interface UserCardProps {
+  name: string
+  role: string
+  avatar?: string
+  bio?: string
+  href?: string
+}
+
+export default function UserCard({ name, role, avatar, bio, href }: UserCardProps) {
+  const initials = name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+
+  const content = (
+    <article>
+      <div className="avatar">
+        {avatar
+          ? <img src={avatar} alt="" aria-hidden="true" />
+          : <span className="initials" aria-hidden="true">{initials}</span>
+        }
+      </div>
+      <div className="info">
+        <strong className="name">{name}</strong>
+        <span className="role">{role}</span>
+        {bio && <p className="bio">{bio}</p>}
+      </div>
+    </article>
+  )
+
+  return href ? <a href={href} className="link">{content}</a> : content
+}
+</script>
+
+<style scoped>
+.link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+article {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  max-width: 340px;
+  background: #fff;
+  font-family: system-ui, sans-serif;
+  transition: box-shadow 0.15s;
+}
+
+.link:hover article {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #dbeafe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.initials {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1d4ed8;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #111827;
+}
+
+.role {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.bio {
+  margin: 0.4rem 0 0;
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.4;
+}
+</style>
+
+<docs>
+# UserCard
+
+A user profile card with avatar, name, role, and optional bio.
+Uses `<style scoped>` so styles are isolated without CSS Modules naming.
+
+## Props
+
+| Prop   | Type   | Required | Description                         |
+|--------|--------|----------|-------------------------------------|
+| name   | string | ✅       | Full display name                   |
+| role   | string | ✅       | Job title or role                   |
+| avatar | string | —        | URL to avatar image                 |
+| bio    | string | —        | Short biography text                |
+| href   | string | —        | Wraps card in a link when provided  |
+
+## Usage
+
+```tsx
+import UserCard from "./UserCard.rsfc"
+
+<UserCard
+  name="Jane Smith"
+  role="Senior Engineer"
+  bio="Loves TypeScript and open source."
+/>
+```
+</docs>
