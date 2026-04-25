@@ -76,6 +76,8 @@ export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
   // Per-instance cache: virtual module id → CSS code.
   // Populated during transform, consumed by resolveId + load.
   const virtualModuleCache = new Map<string, string>();
+  // Cache last-seen source per file to detect style-only vs full changes in HMR.
+  const sourceCache = new Map<string, string>();
   const filter = makeFilter(options.include, options.exclude);
 
   return {
@@ -94,6 +96,9 @@ export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
 
     async transform(code, id): Promise<TransformResult | null> {
       if (!filter(id)) return null;
+
+      // Keep a snapshot of the source for HMR diffing.
+      sourceCache.set(id, code);
 
       const descriptor = parse(code, { filename: id });
 
@@ -138,21 +143,41 @@ export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
     async handleHotUpdate({ file, read, modules, server }) {
       if (!filter(file)) return;
 
-      // Re-generate to get fresh virtual module content.
-      const source = await read();
-      const output = generate(parse(source, { filename: file }));
+      const newSource = await read();
+      const newDesc = parse(newSource, { filename: file });
+      const output = generate(newDesc);
 
-      // Refresh the cache so the next load() call returns updated CSS/SCSS.
+      // Refresh style virtual module cache.
       for (const vm of output.virtualModules) {
         virtualModuleCache.set(vm.id, vm.code);
       }
 
-      // Collect style virtual module nodes so Vite sends targeted CSS updates
-      // rather than a full page reload.
       const styleModules: ModuleNode[] = output.virtualModules
         .map((vm) => server.moduleGraph.getModuleById(vm.id))
         .filter((m): m is ModuleNode => m !== null && m !== undefined);
 
+      // Detect style-only changes: if script, template, and clientScript blocks
+      // are unchanged we can do a targeted CSS hot-update (no component reload).
+      const prevSource = sourceCache.get(file);
+      sourceCache.set(file, newSource);
+
+      if (prevSource !== undefined && prevSource !== newSource) {
+        const prevDesc = parse(prevSource, { filename: file });
+        const jsUnchanged =
+          prevDesc.script?.content === newDesc.script?.content &&
+          prevDesc.scriptSetup?.content === newDesc.scriptSetup?.content &&
+          prevDesc.clientScript?.content === newDesc.clientScript?.content &&
+          prevDesc.template?.content === newDesc.template?.content &&
+          prevDesc.customBlocks.length === newDesc.customBlocks.length;
+
+        if (jsUnchanged && styleModules.length > 0) {
+          // Style-only change: hot-swap CSS without re-rendering the component.
+          return styleModules;
+        }
+      }
+
+      // Script or template changed: full module invalidation triggers HMR
+      // boundary re-evaluation (component re-renders with new code).
       return [...modules, ...styleModules];
     },
   };

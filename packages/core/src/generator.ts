@@ -123,12 +123,56 @@ function pushMapped(
 }
 
 // ---------------------------------------------------------------------------
-// <script setup> — import hoisting
+// <script setup> — import hoisting + defineProps macro
 // ---------------------------------------------------------------------------
 
 interface SetupLine {
   text: string;
   srcLine: number;
+}
+
+/**
+ * Extract `defineProps<TYPE>(destructuring)` from setup body lines.
+ * Returns the props function parameter string and the body with the
+ * defineProps call removed, or null when no call is found.
+ *
+ * Supports:
+ *   const { foo, bar = 0 } = defineProps<{ foo: string; bar?: number }>()
+ *   const props = defineProps<Props>()
+ */
+function extractDefineProps(lines: SetupLine[]): {
+  propsArg: string;
+  filteredLines: SetupLine[];
+} | null {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    const trimmed = line.text.trim();
+    const match = /^(?:const|let|var)\s+(\{[^}]*\}|\w+)\s*=\s*defineProps\s*</.exec(trimmed);
+    if (!match) continue;
+
+    const pattern = match[1]!;
+    const ltIdx = trimmed.indexOf("defineProps") + "defineProps".length;
+
+    // Count angle brackets to extract the full type argument.
+    let depth = 0;
+    let typeStart = -1;
+    for (let j = ltIdx; j < trimmed.length; j++) {
+      if (trimmed[j] === "<") {
+        depth++;
+        if (depth === 1) typeStart = j + 1;
+      } else if (trimmed[j] === ">") {
+        depth--;
+        if (depth === 0 && typeStart !== -1) {
+          const type = trimmed.slice(typeStart, j).trim();
+          return {
+            propsArg: `${pattern}: ${type}`,
+            filteredLines: [...lines.slice(0, i), ...lines.slice(i + 1)],
+          };
+        }
+      }
+    }
+  }
+  return null;
 }
 
 /**
@@ -395,10 +439,15 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
   // With <script setup>: wrap setup body + clientScript + template together.
   // Without <script setup>: only wrap template (current behaviour).
   if (hasSetup || descriptor.template !== null) {
-    pushBoilerplate(b, "export default function __RsfcComponent__() {");
+    // Resolve defineProps<T>() macro so the component function is typed.
+    const definePropsResult = hasSetup ? extractDefineProps(setupBody) : null;
+    const componentBody = definePropsResult?.filteredLines ?? setupBody;
+    const propsArg = definePropsResult?.propsArg ?? "";
+
+    pushBoilerplate(b, `export default function __RsfcComponent__(${propsArg}) {`);
 
     // Setup body (non-import declarations, hooks, etc.)
-    for (const { text, srcLine } of setupBody) {
+    for (const { text, srcLine } of componentBody) {
       pushMapped(b, "  " + text, srcLine, 0, 2);
     }
 

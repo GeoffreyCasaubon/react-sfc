@@ -51,4 +51,16 @@ export default defineWorkspace([
       passWithNoTests: true,
     },
   },
+  {
+    resolve: {
+      alias: { "@rsfc/core": coreSrc },
+    },
+    test: {
+      name: "typescript-plugin",
+      root: "./packages/typescript-plugin",
+      include: ["src/**/*.test.ts", "src/**/*.spec.ts"],
+      environment: "node",
+      passWithNoTests: true,
+    },
+  },
 ]);

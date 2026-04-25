@@ -716,3 +716,77 @@ describe("column-level source maps", () => {
     expect(segsOnLine[0]?.[3]).toBe(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// defineProps<T>() macro
+// ---------------------------------------------------------------------------
+
+describe("defineProps macro", () => {
+  it("uses the destructuring and type as the component function signature", () => {
+    const { code } = parseAndGenerate(
+      src(
+        "<script setup>",
+        "const { name } = defineProps<{ name: string }>()",
+        "</script>",
+        "<template><div>{name}</div></template>"
+      )
+    );
+    expect(code).toContain("__RsfcComponent__({ name }: { name: string })");
+  });
+
+  it("removes the defineProps call from the function body", () => {
+    const { code } = parseAndGenerate(
+      src(
+        "<script setup>",
+        "const { label } = defineProps<{ label: string }>()",
+        "</script>"
+      )
+    );
+    expect(code).not.toContain("defineProps");
+  });
+
+  it("preserves other setup body lines after removing defineProps", () => {
+    const { code } = parseAndGenerate(
+      src(
+        "<script setup>",
+        "import { useState } from 'react'",
+        "const { title } = defineProps<{ title: string }>()",
+        "const [count, setCount] = useState(0)",
+        "</script>",
+        "<template><div>{title} {count}</div></template>"
+      )
+    );
+    expect(code).toContain("useState");
+    expect(code).toContain("count");
+    expect(code).not.toContain("defineProps");
+  });
+
+  it("supports destructuring with default values in the signature", () => {
+    const { code } = parseAndGenerate(
+      src(
+        "<script setup>",
+        "const { count = 0 } = defineProps<{ count?: number }>()",
+        "</script>"
+      )
+    );
+    expect(code).toContain("{ count = 0 }: { count?: number }");
+  });
+
+  it("supports a simple identifier (non-destructuring) pattern", () => {
+    const { code } = parseAndGenerate(
+      src(
+        "<script setup>",
+        "const props = defineProps<{ id: string }>()",
+        "</script>"
+      )
+    );
+    expect(code).toContain("props: { id: string }");
+  });
+
+  it("generates a plain () signature when defineProps is absent", () => {
+    const { code } = parseAndGenerate(
+      src("<script setup>", "const x = 1", "</script>")
+    );
+    expect(code).toContain("__RsfcComponent__()");
+  });
+});
