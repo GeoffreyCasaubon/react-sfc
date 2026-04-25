@@ -168,7 +168,12 @@ export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
           prevDesc.scriptSetup?.content === newDesc.scriptSetup?.content &&
           prevDesc.clientScript?.content === newDesc.clientScript?.content &&
           prevDesc.template?.content === newDesc.template?.content &&
-          prevDesc.customBlocks.length === newDesc.customBlocks.length;
+          prevDesc.customBlocks.length === newDesc.customBlocks.length &&
+          prevDesc.customBlocks.every(
+            (b, i) =>
+              b.tag === newDesc.customBlocks[i]?.tag &&
+              b.content === newDesc.customBlocks[i]?.content,
+          );
 
         if (jsUnchanged && styleModules.length > 0) {
           // Style-only change: hot-swap CSS without re-rendering the component.

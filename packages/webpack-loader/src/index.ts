@@ -1,5 +1,5 @@
 import type { LoaderContext } from "webpack";
-import { parse, generate } from "@rsfc/core";
+import { parse, generate, compileCss, buildStyleIIFE } from "@rsfc/core";
 import type { VirtualModule } from "@rsfc/core";
 
 export interface RsfcLoaderOptions {
@@ -63,7 +63,7 @@ export default function rsfcLoader(
 }
 
 /**
- * Replace each `import "<\0>rsfc:style:…";` emitted by the generator with an
+ * Replace each `import "\0rsfc:style:…";` emitted by the generator with an
  * inline IIFE that appends a `<style>` element to the document.
  *
  * For `.scss`/`.sass` virtual modules the raw source is compiled with Dart Sass
@@ -92,53 +92,4 @@ async function injectStyles(code: string, virtualModules: VirtualModule[]): Prom
     }
   }
   return result;
-}
-
-async function compileCss(vm: VirtualModule): Promise<string> {
-  if (vm.id.endsWith(".scss") || vm.id.endsWith(".sass")) {
-    let sass: typeof import("sass");
-    try {
-      sass = await import("sass");
-    } catch {
-      throw new Error('[rsfc] Install "sass" to use <style lang="scss/sass"> blocks.');
-    }
-    const syntax = vm.id.endsWith(".sass") ? "indented" : "scss";
-    const result = await sass.compileStringAsync(vm.code, { syntax });
-    return result.css;
-  }
-
-  if (vm.id.endsWith(".less")) {
-    let less: typeof import("less").default;
-    try {
-      less = (await import("less")).default;
-    } catch {
-      throw new Error('[rsfc] Install "less" to use <style lang="less"> blocks.');
-    }
-    const result = await less.render(vm.code);
-    return result.css;
-  }
-
-  if (vm.id.endsWith(".styl") || vm.id.endsWith(".stylus")) {
-    let stylus: typeof import("stylus").default;
-    try {
-      stylus = (await import("stylus")).default;
-    } catch {
-      throw new Error('[rsfc] Install "stylus" to use <style lang="stylus/styl"> blocks.');
-    }
-    return stylus.render(vm.code);
-  }
-
-  return vm.code;
-}
-
-function buildStyleIIFE(css: string, index: number): string {
-  const varName = `__rsfc_style_${index}__`;
-  return [
-    `;/* rsfc:style:${index} */`,
-    `if (typeof document !== 'undefined') {`,
-    `  var ${varName} = document.createElement('style');`,
-    `  ${varName}.textContent = ${JSON.stringify(css)};`,
-    `  (document.head ?? document.documentElement).appendChild(${varName});`,
-    `}`,
-  ].join("\n");
 }

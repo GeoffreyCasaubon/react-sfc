@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { parse, generate } from "@rsfc/core";
+import { parse, generate, compileCss, buildStyleIIFE } from "@rsfc/core";
 import type { RsfcDescriptor, VirtualModule } from "@rsfc/core";
 
 // ---------------------------------------------------------------------------
@@ -11,7 +11,7 @@ import type { RsfcDescriptor, VirtualModule } from "@rsfc/core";
  * Compile a `.rsfc` file to standalone JavaScript.
  * Style virtual modules are inlined as DOM-injection IIFEs.
  * CSS preprocessors (Sass/Less/Stylus) are compiled when the peer package is
- * installed, otherwise the raw source is injected as-is.
+ * installed; if the package is missing the raw source is injected as-is.
  */
 export async function compileFile(inputPath: string): Promise<string> {
   const filename = resolve(inputPath);
@@ -32,7 +32,7 @@ export function parseFile(inputPath: string): RsfcDescriptor {
 }
 
 // ---------------------------------------------------------------------------
-// Virtual module inlining (mirrors the webpack-loader approach)
+// Virtual module inlining
 // ---------------------------------------------------------------------------
 
 async function inlineVirtualModules(
@@ -50,53 +50,17 @@ async function inlineVirtualModules(
       );
     } else {
       const importStatement = `import "${vm.id}";`;
-      const css = await compileCss(vm);
+      // Preprocessor packages are optional in the CLI: fall back to raw CSS
+      // if the package is not installed rather than aborting compilation.
+      let css: string;
+      try {
+        css = await compileCss(vm);
+      } catch {
+        css = vm.code;
+      }
       result = result.replace(importStatement, buildStyleIIFE(css, styleIdx));
       styleIdx++;
     }
   }
   return result;
-}
-
-async function compileCss(vm: VirtualModule): Promise<string> {
-  if (vm.id.endsWith(".scss") || vm.id.endsWith(".sass")) {
-    try {
-      const sass = await import("sass");
-      const syntax = vm.id.endsWith(".sass") ? "indented" : "scss";
-      const result = await sass.compileStringAsync(vm.code, { syntax });
-      return result.css;
-    } catch {
-      return vm.code;
-    }
-  }
-  if (vm.id.endsWith(".less")) {
-    try {
-      const less = (await import("less" as string)).default as { render(s: string): Promise<{ css: string }> };
-      const result = await less.render(vm.code);
-      return result.css;
-    } catch {
-      return vm.code;
-    }
-  }
-  if (vm.id.endsWith(".styl") || vm.id.endsWith(".stylus")) {
-    try {
-      const stylus = (await import("stylus" as string)).default as { render(s: string): string };
-      return stylus.render(vm.code);
-    } catch {
-      return vm.code;
-    }
-  }
-  return vm.code;
-}
-
-function buildStyleIIFE(css: string, index: number): string {
-  const varName = `__rsfc_style_${index}__`;
-  return [
-    `;/* rsfc:style:${index} */`,
-    `if (typeof document !== 'undefined') {`,
-    `  var ${varName} = document.createElement('style');`,
-    `  ${varName}.textContent = ${JSON.stringify(css)};`,
-    `  (document.head ?? document.documentElement).appendChild(${varName});`,
-    `}`,
-  ].join("\n");
 }

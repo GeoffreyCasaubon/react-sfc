@@ -16,3 +16,4 @@ export type {
 
 export { parse } from "./parser.js";
 export { generate, scopeCss } from "./generator.js";
+export { compileCss, buildStyleIIFE } from "./css-compile.js";
