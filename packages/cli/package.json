@@ -24,7 +24,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@rsfc/core": "workspace:*"
+    "@rsfc/core": "workspace:*",
+    "esbuild": ">=0.21.0"
   },
   "peerDependencies": {
     "sass": ">=1.0.0",

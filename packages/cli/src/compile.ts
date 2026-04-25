@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { transform } from "esbuild";
 import { parse, generate, compileCss, buildStyleIIFE } from "@rsfc/core";
 import type { RsfcDescriptor, VirtualModule } from "@rsfc/core";
 
@@ -18,7 +19,14 @@ export async function compileFile(inputPath: string): Promise<string> {
   const source = readFileSync(filename, "utf-8");
   const descriptor = parse(source, { filename });
   const output = generate(descriptor);
-  return inlineVirtualModules(output.code, output.virtualModules);
+  const js = await inlineVirtualModules(output.code, output.virtualModules);
+  const result = await transform(js, {
+    loader: "tsx",
+    target: "esnext",
+    jsx: "automatic",
+    sourcefile: filename,
+  });
+  return result.code;
 }
 
 /**

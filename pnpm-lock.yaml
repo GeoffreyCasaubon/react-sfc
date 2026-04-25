@@ -41,6 +41,9 @@ importers:
       '@rsfc/core':
         specifier: workspace:*
         version: link:../core
+      esbuild:
+        specifier: '>=0.21.0'
+        version: 0.27.7
       less:
         specifier: '>=4.0.0'
         version: 4.6.4

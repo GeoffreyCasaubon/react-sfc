@@ -81,7 +81,7 @@ describe("compileFile", () => {
       ].join("\n")
     );
     const code = await compileFile(path);
-    expect(code).toContain("{ label }: { label: string }");
+    expect(code).toContain("{ label }");
     expect(code).not.toContain("defineProps");
   });
 
