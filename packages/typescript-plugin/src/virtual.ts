@@ -8,26 +8,70 @@ import { parse } from "@rsfc/core";
 // the CLI declarations command (on-disk .d.ts generation).
 // ---------------------------------------------------------------------------
 
-/** Extract the type argument from `defineProps<TYPE>()` by bracket-counting. */
-function extractDefinePropsType(line: string): { pattern: string; type: string } | null {
-  const match = /^(?:const|let|var)\s+(\{[^}]*\}|\w+)\s*=\s*defineProps\s*</.exec(line.trim());
-  if (!match) return null;
+/**
+ * Extract `defineProps<TYPE>(...)` from an array of body lines, handling
+ * multi-line type arguments (e.g. defineProps<{\n  x: string\n}>()).
+ * Returns the props signature and the remaining lines with the call removed,
+ * or null when no defineProps call is found.
+ */
+function extractDefinePropsFromLines(lines: string[]): {
+  propsSignature: string;
+  filteredLines: string[];
+} | null {
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = (lines[i] ?? "").trim();
+    const match = /^(?:const|let|var)\s+(\{[^}]*\}|\w+)\s*=\s*defineProps\s*</.exec(trimmed);
+    if (!match) continue;
 
-  const pattern = match[1]!;
-  const ltIdx = line.indexOf("defineProps") + "defineProps".length;
-  let depth = 0;
-  let typeStart = -1;
+    const pattern = match[1]!;
+    const ltIdx = trimmed.indexOf("defineProps") + "defineProps".length;
 
-  for (let i = ltIdx; i < line.length; i++) {
-    if (line[i] === "<") {
-      depth++;
-      if (depth === 1) typeStart = i + 1;
-    } else if (line[i] === ">") {
-      depth--;
-      if (depth === 0) {
-        return { pattern, type: line.slice(typeStart, i).trim() };
+    let depth = 0;
+    let typeContent = "";
+    let lastLineIdx = i;
+    let found = false;
+
+    scan: for (let li = i; li < lines.length; li++) {
+      const scanText = li === i ? trimmed : (lines[li] ?? "").trim();
+      const startJ = li === i ? ltIdx : 0;
+
+      for (let j = startJ; j < scanText.length; j++) {
+        const ch = scanText[j]!;
+        if (ch === "<") {
+          depth++;
+          if (depth > 1) typeContent += ch;
+        } else if (ch === ">") {
+          depth--;
+          if (depth === 0) {
+            lastLineIdx = li;
+            found = true;
+            break scan;
+          }
+          typeContent += ch;
+        } else if (depth >= 1) {
+          typeContent += ch;
+        }
+      }
+
+      if (depth > 0) {
+        const t = typeContent.trimEnd();
+        if (t && t[t.length - 1] !== "{" && t[t.length - 1] !== "<") {
+          typeContent = t + "; ";
+        }
       }
     }
+
+    if (!found) continue;
+
+    const type = typeContent
+      .replace(/;\s*}/g, " }")
+      .replace(/^{\s*/, "{ ")
+      .trim();
+
+    return {
+      propsSignature: `${pattern}: ${type}`,
+      filteredLines: [...lines.slice(0, i), ...lines.slice(lastLineIdx + 1)],
+    };
   }
   return null;
 }
@@ -73,30 +117,22 @@ export function makeVirtualContent(rsfcPath: string, readFile: (p: string) => st
       }
     }
 
-    // Try defineProps<T>() first
+    // Try defineProps<T>() first (handles multi-line type args).
+    const definePropsResult = extractDefinePropsFromLines(bodyLines);
     let propsSignature = "";
-    const filteredBody: string[] = [];
-    let foundDefineProps = false;
+    let componentBody: string[];
 
-    for (const line of bodyLines) {
-      const result = extractDefinePropsType(line);
-      if (!foundDefineProps && result) {
-        propsSignature = `${result.pattern}: ${result.type}`;
-        foundDefineProps = true;
-      } else {
-        filteredBody.push(line);
-      }
-    }
-
-    // Fallback: detect `interface Props` or `type Props =`
-    if (!propsSignature) {
+    if (definePropsResult) {
+      propsSignature = definePropsResult.propsSignature;
+      componentBody = definePropsResult.filteredLines;
+    } else {
+      componentBody = bodyLines;
+      // Fallback: detect `interface Props` or `type Props =`
       const hasPropsInterface = content.match(/(?:^|\n)\s*(?:export\s+)?(?:interface|type)\s+Props\b/);
       if (hasPropsInterface) {
         propsSignature = "props: Props";
       }
     }
-
-    const componentBody = foundDefineProps ? filteredBody : bodyLines;
 
     return [
       `import React from "react"`,

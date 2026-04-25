@@ -91,6 +91,36 @@ describe("makeVirtualContent — <script setup>", () => {
     // No props signature — empty params
     expect(result).toContain("function Component()");
   });
+
+  it("handles multi-line defineProps type argument", () => {
+    const result = fromSource([
+      "<script setup lang=\"ts\">",
+      "const { name, role } = defineProps<{",
+      "  name: string",
+      "  role: string",
+      "}>()",
+      "</script>",
+    ].join("\n"));
+    expect(result).toContain("{ name, role }: { name: string; role: string }");
+    expect(result).not.toContain("defineProps");
+  });
+
+  it("skips all multi-line defineProps lines from the function body", () => {
+    const result = fromSource([
+      "<script setup lang=\"ts\">",
+      "import { useState } from \"react\"",
+      "const { label } = defineProps<{",
+      "  label: string",
+      "}>()",
+      "const x = 1",
+      "</script>",
+    ].join("\n"));
+    expect(result).toContain("useState");
+    expect(result).toContain("const x = 1");
+    expect(result).not.toContain("defineProps");
+    // Type ends up in the function signature, not as a standalone body statement
+    expect(result).toContain("{ label }: { label: string }");
+  });
 });
 
 describe("makeVirtualContent — no script", () => {

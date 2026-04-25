@@ -153,24 +153,57 @@ function extractDefineProps(lines: SetupLine[]): {
     const pattern = match[1]!;
     const ltIdx = trimmed.indexOf("defineProps") + "defineProps".length;
 
-    // Count angle brackets to extract the full type argument.
+    // Count angle brackets to extract the full type argument, spanning multiple
+    // lines when necessary (e.g. defineProps<{\n  x: string\n  y: number\n}>()).
     let depth = 0;
-    let typeStart = -1;
-    for (let j = ltIdx; j < trimmed.length; j++) {
-      if (trimmed[j] === "<") {
-        depth++;
-        if (depth === 1) typeStart = j + 1;
-      } else if (trimmed[j] === ">") {
-        depth--;
-        if (depth === 0 && typeStart !== -1) {
-          const type = trimmed.slice(typeStart, j).trim();
-          return {
-            propsArg: `${pattern}: ${type}`,
-            filteredLines: [...lines.slice(0, i), ...lines.slice(i + 1)],
-          };
+    let typeContent = "";
+    let lastLineIdx = i;
+    let found = false;
+
+    scan: for (let li = i; li < lines.length; li++) {
+      const scanText = li === i ? trimmed : (lines[li]?.text.trim() ?? "");
+      const startJ = li === i ? ltIdx : 0;
+
+      for (let j = startJ; j < scanText.length; j++) {
+        const ch = scanText[j]!;
+        if (ch === "<") {
+          depth++;
+          if (depth > 1) typeContent += ch; // nested generic, e.g. Array<string>
+        } else if (ch === ">") {
+          depth--;
+          if (depth === 0) {
+            lastLineIdx = li;
+            found = true;
+            break scan;
+          }
+          typeContent += ch;
+        } else if (depth >= 1) {
+          typeContent += ch;
+        }
+      }
+
+      // At a line boundary inside the type, insert a "; " separator (unless the
+      // last collected char is an opening brace/angle — no separator needed there).
+      if (depth > 0) {
+        const t = typeContent.trimEnd();
+        if (t && t[t.length - 1] !== "{" && t[t.length - 1] !== "<") {
+          typeContent = t + "; ";
         }
       }
     }
+
+    if (!found) continue;
+
+    // Normalise: "{ x: string; y: number; }" → "{ x: string; y: number }"
+    const type = typeContent
+      .replace(/;\s*}/g, " }")
+      .replace(/^{\s*/, "{ ")
+      .trim();
+
+    return {
+      propsArg: `${pattern}: ${type}`,
+      filteredLines: [...lines.slice(0, i), ...lines.slice(lastLineIdx + 1)],
+    };
   }
   return null;
 }

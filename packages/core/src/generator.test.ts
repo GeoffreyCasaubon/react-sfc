@@ -789,4 +789,54 @@ describe("defineProps macro", () => {
     );
     expect(code).toContain("__RsfcComponent__()");
   });
+
+  it("handles multi-line type argument in defineProps", () => {
+    const { code } = parseAndGenerate(
+      src(
+        "<script setup lang=\"ts\">",
+        "const { name, role } = defineProps<{",
+        "  name: string",
+        "  role: string",
+        "}>()",
+        "</script>",
+        "<template><span>{name}</span></template>"
+      )
+    );
+    expect(code).toContain("{ name, role }: { name: string; role: string }");
+    expect(code).not.toContain("defineProps");
+  });
+
+  it("handles multi-line type with nested generics", () => {
+    const { code } = parseAndGenerate(
+      src(
+        "<script setup lang=\"ts\">",
+        "const { items } = defineProps<{",
+        "  items: Array<string>",
+        "}>()",
+        "</script>"
+      )
+    );
+    expect(code).toContain("items: Array<string>");
+    expect(code).not.toContain("defineProps");
+  });
+
+  it("skips all consumed lines when defineProps spans multiple lines", () => {
+    const { code } = parseAndGenerate(
+      src(
+        "<script setup lang=\"ts\">",
+        "const x = 1",
+        "const { label } = defineProps<{",
+        "  label: string",
+        "}>()",
+        "const y = 2",
+        "</script>"
+      )
+    );
+    // Only the defineProps lines should be removed; x and y must remain
+    expect(code).toContain("const x = 1");
+    expect(code).toContain("const y = 2");
+    expect(code).not.toContain("defineProps");
+    // Type ends up in the function signature, not as a standalone body statement
+    expect(code).toContain("{ label }: { label: string }");
+  });
 });
