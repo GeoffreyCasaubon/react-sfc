@@ -1,8 +1,22 @@
 "use client";
-import dynamic from "next/dynamic";
+import Hello from "../components/Hello.rsfc";
+import ServerDataCard from "../components/ServerDataCard.rsfc";
 
-const Hello = dynamic(() => import("../components/Hello.rsfc"), { ssr: false });
+interface Props {
+  serverTime: string;
+  environment: string;
+  buildId: string;
+}
 
-export default function ClientPage() {
-  return <Hello />;
+export default function ClientPage({ serverTime, environment, buildId }: Props) {
+  return (
+    <>
+      <ServerDataCard
+        serverTime={serverTime}
+        environment={environment}
+        buildId={buildId}
+      />
+      <Hello />
+    </>
+  );
 }
