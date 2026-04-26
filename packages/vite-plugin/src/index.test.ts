@@ -410,11 +410,7 @@ describe("load", () => {
 // handleHotUpdate — HMR
 // ---------------------------------------------------------------------------
 
-type HmrCtx = Parameters<
-  NonNullable<
-    import("vite").Plugin extends { handleHotUpdate?: infer H } ? H : never
-  >
->[0];
+type HmrCtx = import("vite").HmrContext;
 
 function callHotUpdate(
   plugin: import("vite").Plugin,
