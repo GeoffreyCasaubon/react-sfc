@@ -1,0 +1,142 @@
+<script setup lang="ts">
+import { useState, useRef } from "react"
+
+const [running, setRunning] = useState(false)
+const [elapsed, setElapsed] = useState(0)
+const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+const startRef = useRef(0)
+
+const toggle = () => {
+  if (running) {
+    if (timerRef.current !== null) clearInterval(timerRef.current)
+    timerRef.current = null
+    setRunning(false)
+  } else {
+    startRef.current = Date.now() - elapsed
+    timerRef.current = setInterval(() => {
+      setElapsed(Date.now() - startRef.current)
+    }, 30)
+    setRunning(true)
+  }
+}
+
+const reset = () => {
+  if (timerRef.current !== null) clearInterval(timerRef.current)
+  timerRef.current = null
+  setRunning(false)
+  setElapsed(0)
+}
+
+const mm = String(Math.floor(elapsed / 60000)).padStart(2, "0")
+const ss = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, "0")
+const cs = String(Math.floor((elapsed % 1000) / 10)).padStart(2, "0")
+const display = `${mm}:${ss}.${cs}`
+</script>
+
+<template>
+<div className={styles.wrap}>
+  <h2 className={styles.title}>Stopwatch</h2>
+  <p className={styles.display}>{display}</p>
+  <div className={styles.controls}>
+    <button
+      className={running ? styles.btnStop : styles.btnStart}
+      onClick={toggle}
+    >
+      {running ? "Stop" : "Start"}
+    </button>
+    <button className={styles.btnReset} onClick={reset}>
+      Reset
+    </button>
+  </div>
+  <p className={styles.hint}>
+    Powered by <code>useRef</code> + <code>setInterval</code> inside a{" "}
+    <code>.rsfc</code> Single File Component.
+  </p>
+</div>
+</template>
+
+<style module>
+.wrap {
+  max-width: 340px;
+  margin: 2rem auto;
+  padding: 1.5rem 2rem;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  font-family: system-ui, sans-serif;
+  background: #fffbeb;
+  text-align: center;
+}
+
+.title {
+  margin-top: 0;
+  color: #78350f;
+  font-size: 1.3rem;
+}
+
+.display {
+  font-size: 3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  color: #1c1917;
+  margin: 1rem 0;
+  font-family: ui-monospace, monospace;
+}
+
+.controls {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.btnStart,
+.btnStop,
+.btnReset {
+  border: none;
+  border-radius: 6px;
+  padding: 0.4em 1.2em;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btnStart {
+  background: #16a34a;
+  color: #fff;
+}
+
+.btnStart:hover {
+  background: #15803d;
+}
+
+.btnStop {
+  background: #dc2626;
+  color: #fff;
+}
+
+.btnStop:hover {
+  background: #b91c1c;
+}
+
+.btnReset {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btnReset:hover {
+  background: #d1d5db;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #92400e;
+  margin: 0;
+}
+
+.hint code {
+  background: #fde68a;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+</style>

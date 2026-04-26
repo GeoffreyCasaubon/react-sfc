@@ -1,27 +1,21 @@
 {
-  "name": "@rsfc/webpack-loader",
+  "name": "@rsfc/cli",
   "version": "1.0.0",
-  "description": "Webpack loader for RSFC (React Single File Components)",
+  "description": "CLI for React Single File Components — compile and inspect .rsfc files",
   "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
   },
+  "bin": {
+    "rsfc": "./dist/cli.js"
+  },
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/compile.d.ts",
+      "import": "./dist/compile.js"
     }
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -33,10 +27,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@rsfc/core": "workspace:*"
+    "@rsfc/core": "workspace:*",
+    "esbuild": ">=0.21.0"
   },
   "peerDependencies": {
-    "webpack": ">=5.0.0",
     "sass": ">=1.0.0",
     "less": ">=4.0.0",
     "stylus": ">=0.60.0"
@@ -53,8 +47,6 @@
     }
   },
   "devDependencies": {
-    "@types/node": ">=18.0.0",
-    "@types/webpack": "^5.28.5",
-    "webpack": "^5.96.0"
+    "@types/node": ">=18.0.0"
   }
 }

@@ -1,0 +1,26 @@
+{
+  "name": "@rsfc/typescript-plugin",
+  "version": "1.0.0",
+  "description": "TypeScript language service plugin for RSFC files — enables prop inference in any IDE that supports tsserver",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rsfc/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

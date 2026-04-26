@@ -14,9 +14,13 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-react": "^7.26.0",
+    "@babel/preset-typescript": "^7.26.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "babel-loader": "^9.2.0",
     "typescript": "^5.7.0"
   }
 }

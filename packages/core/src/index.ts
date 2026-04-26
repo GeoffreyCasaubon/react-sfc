@@ -1,5 +1,4 @@
 // @rsfc/core — public API
-// This barrel forms the public contract of the package.
 
 export type {
   RsfcBlockKind,
@@ -9,4 +8,12 @@ export type {
   RawSourceMap,
   VirtualModule,
   GeneratedOutput,
+  SourcePosition,
+  SourceLocation,
+  StyleBlock,
+  CustomBlock,
 } from "./types.js";
+
+export { parse } from "./parser.js";
+export { generate, scopeCss } from "./generator.js";
+export { compileCss, buildStyleIIFE } from "./css-compile.js";

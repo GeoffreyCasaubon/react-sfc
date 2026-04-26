@@ -1,11 +1,7 @@
-/**
- * @rsfc/vite-plugin
- *
- * Transforms .rsfc files into React components via @rsfc/core.
- * TODO: implement once core exports parse() and generate().
- */
-
-import type { Plugin, TransformResult } from "vite";
+import type { Plugin, TransformResult, ModuleNode } from "vite";
+import { transformWithEsbuild } from "vite";
+import { parse, generate } from "@rsfc/core";
+import type { CustomBlock } from "@rsfc/core";
 
 export interface RsfcPluginOptions {
   /**
@@ -18,6 +14,52 @@ export interface RsfcPluginOptions {
    * @default ["node_modules/**"]
    */
   exclude?: string[] | undefined;
+  /**
+   * Map of custom block tag names to transform functions.
+   * Each function receives the block and the file id, and should return
+   * a JavaScript string to append to the module output (or null to ignore).
+   *
+   * @example
+   * ```ts
+   * rsfc({
+   *   customBlockTransforms: {
+   *     graphql: (block) => `export const QUERY = \`${block.content}\`;`,
+   *     i18n: (block, id) => `export const messages = ${block.content};`,
+   *   },
+   * })
+   * ```
+   */
+  customBlockTransforms?: {
+    [tag: string]: (block: CustomBlock, id: string) => string | null | undefined;
+  } | undefined;
+}
+
+// Converts a simple glob pattern (*, **, ?) to a RegExp.
+// Handles the common Vite plugin include/exclude cases without extra deps.
+function globToRegex(pattern: string): RegExp {
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*\*/g, "\x00")
+    .replace(/\*/g, "[^/]*")
+    .replace(/\x00/g, ".*")
+    .replace(/\?/g, "[^/]");
+  return new RegExp(`(?:^|/)${escaped}(?:$|[?#])`);
+}
+
+function makeFilter(
+  include: string[] | undefined,
+  exclude: string[] | undefined,
+): (id: string) => boolean {
+  const includeRe = include?.map(globToRegex);
+  const excludeRe = exclude?.map(globToRegex);
+
+  return (id: string) => {
+    const clean = id.split("?")[0]!;
+
+    if (excludeRe?.some((re) => re.test(clean))) return false;
+    if (includeRe) return includeRe.some((re) => re.test(clean));
+    return clean.endsWith(".rsfc");
+  };
 }
 
 /**
@@ -30,25 +72,139 @@ export interface RsfcPluginOptions {
  * export default defineConfig({ plugins: [rsfc()] });
  * ```
  */
-export default function rsfc(_options: RsfcPluginOptions = {}): Plugin {
+export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
+  // Per-instance cache: virtual module id → CSS code.
+  // Populated during transform, consumed by resolveId + load.
+  const virtualModuleCache = new Map<string, string>();
+  // Tracks which virtual module ids were emitted by each source file.
+  // Used to purge stale entries when a file is re-transformed.
+  const fileToVirtualIds = new Map<string, Set<string>>();
+  // Cache last-seen source per file to detect style-only vs full changes in HMR.
+  const sourceCache = new Map<string, string>();
+  const filter = makeFilter(
+    options.include ?? ["**/*.rsfc"],
+    options.exclude ?? ["node_modules/**"],
+  );
+
   return {
     name: "vite-plugin-rsfc",
     enforce: "pre",
 
-    resolveId(_id: string) {
-      // TODO: intercept virtual module ids from GeneratedOutput.virtualModules
-      return null;
+    resolveId(id) {
+      // Only claim ids that we registered during a previous transform call.
+      return virtualModuleCache.has(id) ? id : null;
     },
 
-    load(_id: string) {
-      // TODO: return virtual module code for intercepted ids
-      return null;
+    load(id) {
+      const code = virtualModuleCache.get(id);
+      return code !== undefined ? { code } : null;
     },
 
-    transform(_code: string, id: string): TransformResult | null {
-      if (!id.endsWith(".rsfc")) return null;
-      // TODO: call core parse() then generate(), return { code, map }
-      return null;
+    async transform(code, id): Promise<TransformResult | null> {
+      if (!filter(id)) return null;
+
+      // Keep a snapshot of the source for HMR diffing.
+      sourceCache.set(id, code);
+
+      const descriptor = parse(code, { filename: id });
+
+      // Surface parse errors as Vite warnings — never throw (resilient transform).
+      for (const err of descriptor.errors) {
+        this.warn(`[rsfc] ${err.message} (${id}:${err.loc.start.line + 1})`);
+      }
+
+      const output = generate(descriptor);
+
+      // Remove virtual module entries that no longer exist after a re-transform.
+      const prevIds = fileToVirtualIds.get(id);
+      const newIds = new Set(output.virtualModules.map((vm) => vm.id));
+      if (prevIds) {
+        for (const oldId of prevIds) {
+          if (!newIds.has(oldId)) virtualModuleCache.delete(oldId);
+        }
+      }
+      fileToVirtualIds.set(id, newIds);
+
+      // Register style virtual modules so resolveId + load can serve them.
+      for (const vm of output.virtualModules) {
+        virtualModuleCache.set(vm.id, vm.code);
+      }
+
+      // Append custom block transform outputs (if any) before esbuild so
+      // TypeScript in the transform result is also stripped.
+      let extraCode = "";
+      if (options.customBlockTransforms) {
+        for (const block of descriptor.customBlocks) {
+          const fn = options.customBlockTransforms[block.tag];
+          if (fn) {
+            const result = fn(block, id);
+            if (result != null) extraCode += "\n" + result;
+          }
+        }
+      }
+
+      // Strip TypeScript and transform JSX via esbuild. Using a synthetic .tsx
+      // filename so esbuild applies both TS stripping and JSX transformation,
+      // which it would skip for the raw .rsfc id.
+      const stripped = await transformWithEsbuild(output.code + extraCode, id + ".tsx", {
+        loader: "tsx",
+        target: "esnext",
+        jsx: "automatic",
+        sourcefile: id,
+      });
+
+      return { code: stripped.code, map: stripped.map } as unknown as TransformResult;
+    },
+
+    async handleHotUpdate({ file, read, modules, server }) {
+      if (!filter(file)) return;
+
+      const newSource = await read();
+      const newDesc = parse(newSource, { filename: file });
+
+      for (const err of newDesc.errors) {
+        server.config.logger.warn(`[rsfc] ${err.message} (${file}:${err.loc.start.line + 1})`);
+      }
+
+      const output = generate(newDesc);
+
+      // Refresh style virtual module cache.
+      for (const vm of output.virtualModules) {
+        virtualModuleCache.set(vm.id, vm.code);
+      }
+
+      const styleModules: ModuleNode[] = output.virtualModules
+        .map((vm) => server.moduleGraph.getModuleById(vm.id))
+        .filter((m): m is ModuleNode => m !== null && m !== undefined);
+
+      // Detect style-only changes: if script, template, and clientScript blocks
+      // are unchanged we can do a targeted CSS hot-update (no component reload).
+      const prevSource = sourceCache.get(file);
+      sourceCache.set(file, newSource);
+
+      if (prevSource !== undefined && prevSource !== newSource) {
+        const prevDesc = parse(prevSource, { filename: file });
+        const jsUnchanged =
+          prevDesc.script?.content === newDesc.script?.content &&
+          prevDesc.scriptSetup?.content === newDesc.scriptSetup?.content &&
+          prevDesc.clientScript?.content === newDesc.clientScript?.content &&
+          prevDesc.template?.content === newDesc.template?.content &&
+          prevDesc.customBlocks.length === newDesc.customBlocks.length &&
+          prevDesc.customBlocks.every(
+            (b, i) =>
+              b.tag === newDesc.customBlocks[i]?.tag &&
+              b.content === newDesc.customBlocks[i]?.content,
+          );
+
+        if (jsUnchanged && styleModules.length > 0) {
+          // Style-only change: hot-swap CSS without re-rendering the component.
+          return styleModules;
+        }
+      }
+
+      // Script or template changed: full module invalidation triggers HMR
+      // boundary re-evaluation (component re-renders with new code).
+      return [...modules, ...styleModules];
     },
   };
 }

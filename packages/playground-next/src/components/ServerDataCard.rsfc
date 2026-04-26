@@ -1,0 +1,97 @@
+<script setup lang="ts">
+interface Props { serverTime: string; environment: string; buildId: string }
+const { serverTime, environment, buildId } = defineProps<Props>()
+</script>
+
+<template>
+<div className={styles.card}>
+  <div className={styles.badge}>SSR</div>
+  <h2 className={styles.heading}>Server-Rendered Props</h2>
+  <p className={styles.description}>
+    This component received its props from a React Server Component — the data
+    was serialised on the server and hydrated on the client without a client-side
+    fetch.
+  </p>
+  <dl className={styles.dl}>
+    <dt className={styles.dt}>Rendered at</dt>
+    <dd className={styles.dd}>
+      <code className={styles.code}>{serverTime}</code>
+    </dd>
+    <dt className={styles.dt}>Environment</dt>
+    <dd className={styles.dd}>
+      <code className={styles.code}>{environment}</code>
+    </dd>
+    <dt className={styles.dt}>Build ID</dt>
+    <dd className={styles.dd}>
+      <code className={styles.code}>{buildId}</code>
+    </dd>
+  </dl>
+</div>
+</template>
+
+<style module>
+.card {
+  position: relative;
+  max-width: 540px;
+  margin: 2rem auto;
+  padding: 1.5rem 2rem;
+  border: 2px solid #0070f3;
+  border-radius: 12px;
+  font-family: system-ui, sans-serif;
+  background: #f0f7ff;
+}
+
+.badge {
+  position: absolute;
+  top: -0.75rem;
+  left: 1.25rem;
+  background: #0070f3;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.15em 0.6em;
+  border-radius: 4px;
+}
+
+.heading {
+  margin-top: 0;
+  color: #003d88;
+  font-size: 1.2rem;
+}
+
+.description {
+  font-size: 0.88rem;
+  color: #444;
+  line-height: 1.55;
+  margin-bottom: 1rem;
+}
+
+.dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+  align-items: baseline;
+}
+
+.dt {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dd {
+  margin: 0;
+}
+
+.code {
+  background: #dbeafe;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.88rem;
+  color: #1e40af;
+}
+</style>

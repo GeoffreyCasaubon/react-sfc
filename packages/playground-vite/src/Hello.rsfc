@@ -1,0 +1,88 @@
+<script setup lang="ts">
+import { useState } from "react"
+
+const framework = "Vite"
+const reactVersion = "19"
+const features: Array<{ id: number; name: string; done: boolean }> = [
+  { id: 1, name: "Parser  (@rsfc/core)", done: true },
+  { id: 2, name: "Generator + V3 source maps", done: true },
+  { id: 3, name: "Vite plugin", done: true },
+  { id: 4, name: "Webpack loader", done: true },
+  { id: 5, name: "<script setup> sugar", done: true },
+  { id: 6, name: "<style scoped>", done: true },
+  { id: 7, name: "<style module> CSS Modules", done: true },
+  { id: 8, name: "Less / Stylus preprocessors", done: true },
+  { id: 9, name: "Playground integration", done: true },
+]
+const [count, setCount] = useState(0)
+</script>
+
+<template>
+<div className={styles.demo}>
+  <h1 className={styles.title}>React {reactVersion} + {framework} 🚀</h1>
+  <p>
+    This component is a <code className={styles.code}>.rsfc</code> Single File
+    Component using <strong>CSS Modules</strong> (<code className={styles.code}>{"<style module>"}</code>).
+  </p>
+  <ul className={styles.list}>
+    {features.map((f) => (
+      <li key={f.id} className={styles.item} style={{ opacity: f.done ? 1 : 0.4 }}>
+        {f.done ? "✅" : "⬜"} {f.name}
+      </li>
+    ))}
+  </ul>
+  <p>
+    useState counter:{" "}
+    <button className={styles.btn} onClick={() => setCount(count + 1)}>{count}</button>
+  </p>
+</div>
+</template>
+
+<style module>
+.demo {
+  max-width: 540px;
+  margin: 2rem auto;
+  padding: 1.5rem 2rem;
+  border: 2px solid #646cff;
+  border-radius: 12px;
+  font-family: system-ui, sans-serif;
+  background: #fafafa;
+}
+
+.title {
+  margin-top: 0;
+  color: #213547;
+  font-size: 1.5rem;
+}
+
+.code {
+  background: #ececec;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.list {
+  padding-left: 0;
+}
+
+.item {
+  list-style: none;
+  padding: 0.3rem 0;
+  font-size: 0.95rem;
+}
+
+.btn {
+  background: #646cff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.3em 0.8em;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #535bf2;
+}
+</style>

@@ -1,0 +1,103 @@
+<script setup lang="ts">
+import { useState } from "react"
+
+type Theme = "light" | "dark"
+
+const [theme, setTheme] = useState<Theme>("light")
+const toggle = () => setTheme((t) => (t === "light" ? "dark" : "light"))
+const isDark = theme === "dark"
+</script>
+
+<clientScript>
+// Sync theme to <html data-theme="…"> — runs only in the browser
+document.documentElement.setAttribute("data-theme", theme)
+</clientScript>
+
+<template>
+<button
+  className={`${styles.btn} ${isDark ? styles.dark : styles.light}`}
+  onClick={toggle}
+  aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+  aria-pressed={isDark}
+>
+  <span className={styles.icon}>{isDark ? "☀️" : "🌙"}</span>
+  {isDark ? "Light mode" : "Dark mode"}
+</button>
+</template>
+
+<style module>
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: system-ui, sans-serif;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.light {
+  background: #1a1a1a;
+  color: #f9fafb;
+  border-color: #1a1a1a;
+}
+
+.light:hover {
+  background: #333;
+}
+
+.dark {
+  background: #f9fafb;
+  color: #1a1a1a;
+  border-color: #d1d5db;
+}
+
+.dark:hover {
+  background: #e5e7eb;
+}
+
+.icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+</style>
+
+<docs>
+# ThemeToggle
+
+Demonstrates `<clientScript>` — code that runs inside the component function
+**only in the browser**, not during SSR. Used here to reflect the theme state
+onto `<html data-theme="…">` so global CSS variables can react.
+
+## CSS Variables setup (global stylesheet)
+
+```css
+:root, [data-theme="light"] {
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --fg: #f9fafb;
+}
+```
+
+## Usage
+
+```tsx
+import ThemeToggle from "./ThemeToggle.rsfc"
+
+export default function Navbar() {
+  return (
+    <nav>
+      <ThemeToggle />
+    </nav>
+  )
+}
+```
+</docs>
