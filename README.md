@@ -353,7 +353,7 @@ A polymorphic button with primary and ghost variants.
 Extract it programmatically:
 
 ```ts
-import { parseFile } from "@rsfc/cli/compile"
+import { parseFile } from "@rsfc/cli"
 
 const { docs } = parseFile("./src/Button.rsfc")
 console.log(docs?.content)  // Markdown string
@@ -509,7 +509,7 @@ interface RsfcPluginOptions {
 ### `@rsfc/cli` — programmatic API
 
 ```ts
-import { compileFile, parseFile } from "@rsfc/cli/compile"
+import { compileFile, parseFile } from "@rsfc/cli"
 
 const js = await compileFile("./src/Button.rsfc")   // → JS string
 const descriptor = parseFile("./src/Button.rsfc")   // → RsfcDescriptor

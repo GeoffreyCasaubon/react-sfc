@@ -20,7 +20,7 @@ export interface SourcePosition {
   line: number;
   /** 0-based column number within the line. */
   column: number;
-  /** 0-based byte offset from the start of the source file. */
+  /** 0-based UTF-16 code unit offset from the start of the source file. */
   offset: number;
 }
 

@@ -76,9 +76,15 @@ export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
   // Per-instance cache: virtual module id → CSS code.
   // Populated during transform, consumed by resolveId + load.
   const virtualModuleCache = new Map<string, string>();
+  // Tracks which virtual module ids were emitted by each source file.
+  // Used to purge stale entries when a file is re-transformed.
+  const fileToVirtualIds = new Map<string, Set<string>>();
   // Cache last-seen source per file to detect style-only vs full changes in HMR.
   const sourceCache = new Map<string, string>();
-  const filter = makeFilter(options.include, options.exclude);
+  const filter = makeFilter(
+    options.include ?? ["**/*.rsfc"],
+    options.exclude ?? ["node_modules/**"],
+  );
 
   return {
     name: "vite-plugin-rsfc",
@@ -108,6 +114,16 @@ export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
       }
 
       const output = generate(descriptor);
+
+      // Remove virtual module entries that no longer exist after a re-transform.
+      const prevIds = fileToVirtualIds.get(id);
+      const newIds = new Set(output.virtualModules.map((vm) => vm.id));
+      if (prevIds) {
+        for (const oldId of prevIds) {
+          if (!newIds.has(oldId)) virtualModuleCache.delete(oldId);
+        }
+      }
+      fileToVirtualIds.set(id, newIds);
 
       // Register style virtual modules so resolveId + load can serve them.
       for (const vm of output.virtualModules) {
@@ -145,6 +161,11 @@ export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
 
       const newSource = await read();
       const newDesc = parse(newSource, { filename: file });
+
+      for (const err of newDesc.errors) {
+        server.config.logger.warn(`[rsfc] ${err.message} (${file}:${err.loc.start.line + 1})`);
+      }
+
       const output = generate(newDesc);
 
       // Refresh style virtual module cache.

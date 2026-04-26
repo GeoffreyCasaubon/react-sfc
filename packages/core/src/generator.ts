@@ -390,6 +390,7 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
   // CSS module blocks can emit two VMs and two imports atomically.
   const virtualModules: VirtualModule[] = [];
 
+  let unnamedModuleCount = 0;
   for (let i = 0; i < descriptor.styles.length; i++) {
     const style = descriptor.styles[i]!;
     const isModule = "module" in style.attrs;
@@ -411,10 +412,13 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
       }
       const transformedCss = transformClassNames(cssContent, classMap);
 
+      // Named blocks use the attribute value; unnamed blocks get unique names
+      // so multiple <style module> blocks in the same file don't shadow each other.
       const varName =
         typeof style.attrs.module === "string" && style.attrs.module !== ""
           ? style.attrs.module
-          : "styles";
+          : unnamedModuleCount === 0 ? "styles" : `styles_${unnamedModuleCount}`;
+      unnamedModuleCount++;
 
       const cssModuleId = `\0rsfc:cssmodule:${descriptor.filename}:${i}`;
 
@@ -457,15 +461,26 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
     }
   }
 
-  // -- When there is no <script setup>, emit clientScript at module level ---
-  // (legacy behaviour: client-only side-effect code runs when the module loads)
-  if (!hasSetup && descriptor.clientScript !== null) {
+  // -- clientScript: hoist imports to module level, collect body for later ----
+  // Static import declarations cannot appear inside blocks or functions, so we
+  // split the block and emit imports here regardless of whether setup is present.
+  let clientScriptBody: SetupLine[] = [];
+  if (descriptor.clientScript !== null) {
     const { content, loc } = descriptor.clientScript;
-    const contentLines = content.split("\n");
-    for (let i = 0; i < contentLines.length; i++) {
-      const line = contentLines[i] ?? "";
-      pushMapped(b, line, loc.start.line + i, 0);
+    const { imports, body } = splitSetupContent(content, loc.start.line);
+    for (const { text, srcLine } of imports) {
+      pushMapped(b, text, srcLine, 0);
     }
+    clientScriptBody = body;
+  }
+
+  // -- When there is no <script setup>, emit clientScript body at module level -
+  if (!hasSetup && clientScriptBody.length > 0) {
+    pushBoilerplate(b, "if (typeof document !== 'undefined') {");
+    for (const { text, srcLine } of clientScriptBody) {
+      pushMapped(b, "  " + text, srcLine, 0, 2);
+    }
+    pushBoilerplate(b, "}");
   }
 
   // -- Component function ---------------------------------------------------
@@ -484,14 +499,13 @@ export function generate(descriptor: RsfcDescriptor): GeneratedOutput {
       pushMapped(b, "  " + text, srcLine, 0, 2);
     }
 
-    // clientScript inside the function when setup is present
-    if (hasSetup && descriptor.clientScript !== null) {
-      const { content, loc } = descriptor.clientScript;
-      const contentLines = content.split("\n");
-      for (let i = 0; i < contentLines.length; i++) {
-        const line = contentLines[i] ?? "";
-        pushMapped(b, "  " + line, loc.start.line + i, 0, 2);
+    // clientScript body inside the function when setup is present
+    if (hasSetup && clientScriptBody.length > 0) {
+      pushBoilerplate(b, "  if (typeof document !== 'undefined') {");
+      for (const { text, srcLine } of clientScriptBody) {
+        pushMapped(b, "    " + text, srcLine, 0, 4);
       }
+      pushBoilerplate(b, "  }");
     }
 
     if (descriptor.template !== null) {

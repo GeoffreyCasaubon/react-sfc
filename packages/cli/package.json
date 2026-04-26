@@ -12,6 +12,7 @@
   },
   "exports": {
     ".": {
+      "types": "./dist/compile.d.ts",
       "import": "./dist/compile.js"
     }
   },
