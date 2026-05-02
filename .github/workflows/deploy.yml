@@ -25,6 +25,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm build:core && pnpm build:vite-plugin
       - run: pnpm --filter @g-casau/rsfc-website build
       - uses: actions/upload-pages-artifact@v3
         with:
