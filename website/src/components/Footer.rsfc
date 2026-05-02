@@ -1,0 +1,45 @@
+<template>
+<footer className={styles.footer}>
+  <p className={styles.text}>
+    Built with{' '}
+    <code className={styles.code}>.rsfc</code>
+    {' '}—{' '}
+    <a
+      href="https://github.com/GeoffreyCasaubon/react-sfc"
+      target="_blank"
+      rel="noreferrer"
+      className={styles.link}
+    >
+      GeoffreyCasaubon/react-sfc
+    </a>
+  </p>
+</footer>
+</template>
+
+<style module>
+.footer {
+  padding: 2.5rem 2rem;
+  text-align: center;
+  border-top: 1px solid #1a1a30;
+  background: #0d0d1a;
+}
+
+.text {
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+.code {
+  color: #475569;
+  background: #13131f;
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.link {
+  color: #646cff;
+  transition: color 0.15s;
+}
+.link:hover { color: #818cf8; text-decoration: underline; }
+</style>

@@ -1,5 +1,5 @@
 import type { Plugin, TransformResult, ModuleNode } from "vite";
-import { transformWithEsbuild } from "vite";
+import { transformWithOxc } from "vite";
 import { parse, generate } from "@g-casau/rsfc-core";
 import type { CustomBlock } from "@g-casau/rsfc-core";
 
@@ -143,14 +143,13 @@ export default function rsfc(options: RsfcPluginOptions = {}): Plugin {
         }
       }
 
-      // Strip TypeScript and transform JSX via esbuild. Using a synthetic .tsx
-      // filename so esbuild applies both TS stripping and JSX transformation,
+      // Strip TypeScript and transform JSX via OXC. Using a synthetic .tsx
+      // filename so OXC applies both TS stripping and JSX transformation,
       // which it would skip for the raw .rsfc id.
-      const stripped = await transformWithEsbuild(output.code + extraCode, id + ".tsx", {
-        loader: "tsx",
+      const stripped = await transformWithOxc(output.code + extraCode, id + ".tsx", {
+        lang: "tsx",
         target: "esnext",
-        jsx: "automatic",
-        sourcefile: id,
+        jsx: { runtime: "automatic" },
       });
 
       return { code: stripped.code, map: stripped.map } as unknown as TransformResult;

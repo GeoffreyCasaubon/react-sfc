@@ -1,0 +1,185 @@
+<script setup lang="ts">
+import { useState } from 'react'
+
+const [active, setActive] = useState<'script' | 'template' | 'style'>('script')
+
+const blocks = {
+  script: {
+    label: '<script setup>',
+    lang: 'typescript',
+    code: `import { useState } from 'react'
+
+// Declare reactive state directly —
+// no wrapping function needed.
+const [count, setCount] = useState(0)
+const double = count * 2`,
+  },
+  template: {
+    label: '<template>',
+    lang: 'jsx',
+    code: `<div className={styles.card}>
+  <h2 className={styles.title}>Counter</h2>
+
+  <p className={styles.value}>{count}</p>
+  <p className={styles.hint}>× 2 = {double}</p>
+
+  <button
+    className={styles.btn}
+    onClick={() => setCount(count + 1)}
+  >
+    Increment
+  </button>
+</div>`,
+  },
+  style: {
+    label: '<style module>',
+    lang: 'css',
+    code: `/* Styles are scoped via CSS Modules.
+   The 'styles' object is auto-injected. */
+
+.card {
+  padding: 2rem;
+  border-radius: 12px;
+  background: #1e1e2e;
+  text-align: center;
+}
+
+.btn {
+  background: #646cff;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+}`,
+  },
+}
+
+const tabs = (['script', 'template', 'style'] as const)
+</script>
+
+<template>
+<section className={styles.section}>
+  <h2 className={styles.heading}>Clean, familiar syntax</h2>
+  <p className={styles.sub}>
+    Three blocks. One file. Inspired by Vue SFCs, built for React.
+  </p>
+
+  <div className={styles.editor}>
+    <div className={styles.titleBar}>
+      <span className={styles.dot} style={{ background: '#ff5f57' }} />
+      <span className={styles.dot} style={{ background: '#ffbd2e' }} />
+      <span className={styles.dot} style={{ background: '#28c840' }} />
+      <span className={styles.filename}>Counter.rsfc</span>
+    </div>
+
+    <div className={styles.tabs}>
+      {tabs.map((t) => (
+        <button
+          key={t}
+          onClick={() => setActive(t)}
+          className={active === t ? styles.tabActive : styles.tab}
+        >
+          {blocks[t].label}
+        </button>
+      ))}
+    </div>
+
+    <pre className={styles.code}><code>{blocks[active].code}</code></pre>
+  </div>
+</section>
+</template>
+
+<style module>
+.section {
+  padding: 6rem 2rem;
+  background: #0d0d1a;
+  text-align: center;
+}
+
+.heading {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.sub {
+  color: #475569;
+  font-size: 1.05rem;
+  margin-bottom: 3rem;
+}
+
+.editor {
+  max-width: 680px;
+  margin: 0 auto;
+  border: 1px solid #1a1a30;
+  border-radius: 14px;
+  overflow: hidden;
+  text-align: left;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.titleBar {
+  background: #13131f;
+  border-bottom: 1px solid #1a1a30;
+  padding: 0.75rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.filename {
+  color: #475569;
+  font-size: 0.82rem;
+  margin-left: 0.75rem;
+  font-family: monospace;
+}
+
+.tabs {
+  background: #0f0f1c;
+  border-bottom: 1px solid #1a1a30;
+  display: flex;
+  padding: 0 0.5rem;
+}
+
+.tab, .tabActive {
+  padding: 0.7rem 1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 0.82rem;
+  font-family: monospace;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 0.15s;
+}
+
+.tab { color: #475569; }
+.tab:hover { color: #94a3b8; }
+
+.tabActive {
+  color: #818cf8;
+  border-bottom-color: #646cff;
+}
+
+.code {
+  margin: 0;
+  padding: 1.75rem;
+  background: #080812;
+  font-size: 0.84rem;
+  line-height: 1.75;
+  color: #94a3b8;
+  overflow-x: auto;
+  min-height: 240px;
+  white-space: pre;
+}
+</style>

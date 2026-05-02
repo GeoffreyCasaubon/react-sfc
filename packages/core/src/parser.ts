@@ -62,6 +62,50 @@ function parseAttrs(
   return { lang, attrs };
 }
 
+/**
+ * Find the first occurrence of `</tagName>` starting at `from`, skipping over
+ * single-quoted, double-quoted, and backtick strings so that closing tags
+ * embedded inside string literals are not mistaken for the real block boundary.
+ *
+ * Returns the index of `<`, or -1 if not found.
+ */
+function findClosingTag(source: string, tagName: string, from: number): number {
+  const closing = `</${tagName}>`;
+  let i = from;
+
+  while (i < source.length) {
+    const ch = source[i]!;
+
+    if (ch === '"' || ch === "'") {
+      const q = ch;
+      i++;
+      while (i < source.length) {
+        const c = source[i]!;
+        if (c === "\\") { i += 2; continue; }
+        if (c === q) { i++; break; }
+        i++;
+      }
+      continue;
+    }
+
+    if (ch === "`") {
+      i++;
+      while (i < source.length) {
+        const c = source[i]!;
+        if (c === "\\") { i += 2; continue; }
+        if (c === "`") { i++; break; }
+        i++;
+      }
+      continue;
+    }
+
+    if (source.startsWith(closing, i)) return i;
+    i++;
+  }
+
+  return -1;
+}
+
 export function parse(
   source: string,
   options: { filename: string }
@@ -89,7 +133,7 @@ export function parse(
     const openTagEnd = match.index + match[0].length;
 
     const closingTag = `</${tagName}>`;
-    const closeIdx = source.indexOf(closingTag, openTagEnd);
+    const closeIdx = findClosingTag(source, tagName, openTagEnd);
 
     if (closeIdx === -1) {
       errors.push({

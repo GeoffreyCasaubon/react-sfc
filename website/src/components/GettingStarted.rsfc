@@ -1,0 +1,168 @@
+<script setup lang="ts">
+import { useState } from 'react'
+
+const [copied, setCopied] = useState<number | null>(null)
+
+function copy(index: number, text: string) {
+  navigator.clipboard.writeText(text)
+  setCopied(index)
+  setTimeout(() => setCopied(null), 1800)
+}
+
+const S = '</'
+
+const steps = [
+  {
+    n: '01',
+    title: 'Install the plugin',
+    code: 'npm install -D @g-casau/rsfc-vite-plugin @vitejs/plugin-react',
+  },
+  {
+    n: '02',
+    title: 'Configure vite.config.ts',
+    code: `import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import rsfc from '@g-casau/rsfc-vite-plugin'
+
+export default defineConfig({
+  plugins: [rsfc(), react()],
+})`,
+  },
+  {
+    n: '03',
+    title: 'Add type declarations (rsfc.d.ts)',
+    code: `declare module "*.rsfc" {
+  import type { FC } from "react"
+  const Component: FC
+  export default Component
+}`,
+  },
+  {
+    n: '04',
+    title: 'Create your first .rsfc component',
+    code: `${S.replace('/', '')}script setup lang="ts">
+import { useState } from 'react'
+const [count, setCount] = useState(0)
+${S}script>
+
+<template>
+  <button className={styles.btn} onClick={() => setCount(count + 1)}>
+    Clicked {count} times
+  ${S}button>
+</template>
+
+<style module>
+.btn {
+  background: #646cff;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+${S}style>`,
+  },
+]
+</script>
+
+<template>
+<section id="get-started" className={styles.section}>
+  <h2 className={styles.heading}>Get started in minutes</h2>
+  <div className={styles.steps}>
+    {steps.map((s, i) => (
+      <div key={s.n} className={styles.step}>
+        <div className={styles.stepHead}>
+          <span className={styles.number}>{s.n}</span>
+          <h3 className={styles.title}>{s.title}</h3>
+          <button
+            className={styles.copy}
+            onClick={() => copy(i, s.code)}
+          >
+            {copied === i ? '✓ Copied' : 'Copy'}
+          </button>
+        </div>
+        <pre className={styles.code}><code>{s.code}</code></pre>
+      </div>
+    ))}
+  </div>
+</section>
+</template>
+
+<style module>
+.section {
+  padding: 6rem 2rem;
+  background: #0a0a14;
+}
+
+.heading {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 3.5rem;
+  letter-spacing: -0.02em;
+}
+
+.steps {
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.step {
+  border: 1px solid #1a1a30;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.stepHead {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: #0d0d1a;
+  border-bottom: 1px solid #1a1a30;
+}
+
+.number {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #646cff;
+  font-family: monospace;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+
+.title {
+  color: #e2e8f0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.copy {
+  padding: 0.25rem 0.75rem;
+  background: rgba(100, 108, 255, 0.1);
+  border: 1px solid rgba(100, 108, 255, 0.25);
+  color: #818cf8;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.copy:hover { background: rgba(100, 108, 255, 0.2); }
+
+.code {
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  background: #080812;
+  font-size: 0.82rem;
+  line-height: 1.75;
+  color: #64748b;
+  overflow-x: auto;
+  white-space: pre;
+}
+</style>

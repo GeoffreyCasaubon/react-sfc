@@ -1,0 +1,125 @@
+<template>
+<section className={styles.hero}>
+  <span className={styles.badge}>React Single File Components</span>
+  <h1 className={styles.title}>
+    Write React components<br />the Vue way.
+  </h1>
+  <p className={styles.sub}>
+    <code className={styles.inline}>.rsfc</code> brings Vue-style Single File Components to React —
+    colocate your logic, template, and styles in one file,
+    with TypeScript and CSS Modules built in.
+  </p>
+  <div className={styles.install}>
+    <span className={styles.installPrefix}>npm install -D</span>
+    <code>@g-casau/rsfc-vite-plugin</code>
+  </div>
+  <div className={styles.cta}>
+    <a
+      href="https://github.com/GeoffreyCasaubon/react-sfc"
+      target="_blank"
+      rel="noreferrer"
+      className={styles.btnPrimary}
+    >
+      View on GitHub
+    </a>
+    <a href="#get-started" className={styles.btnSecondary}>Get started →</a>
+  </div>
+</section>
+</template>
+
+<style module>
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: radial-gradient(ellipse at 50% 0%, #1a1040 0%, #0d0d1a 65%);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  background: rgba(100, 108, 255, 0.12);
+  border: 1px solid rgba(100, 108, 255, 0.3);
+  border-radius: 999px;
+  color: #a5b4fc;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: clamp(2.8rem, 8vw, 5.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.03em;
+}
+
+.sub {
+  max-width: 580px;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin-bottom: 2.5rem;
+}
+
+.inline {
+  background: rgba(100, 108, 255, 0.15);
+  color: #a5b4fc;
+  padding: 0.1em 0.45em;
+  border-radius: 4px;
+  font-size: 0.95em;
+}
+
+.install {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #13131f;
+  border: 1px solid #22223a;
+  border-radius: 10px;
+  padding: 0.8rem 1.6rem;
+  color: #e2e8f0;
+  margin-bottom: 2.5rem;
+  font-size: 0.92rem;
+}
+
+.installPrefix {
+  color: #64748b;
+}
+
+.cta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btnPrimary {
+  padding: 0.8rem 1.8rem;
+  background: #646cff;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background 0.2s, transform 0.1s;
+}
+.btnPrimary:hover { background: #535bf2; transform: translateY(-1px); }
+
+.btnSecondary {
+  padding: 0.8rem 1.8rem;
+  border: 1px solid #22223a;
+  color: #94a3b8;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btnSecondary:hover { border-color: #646cff; color: #fff; }
+</style>

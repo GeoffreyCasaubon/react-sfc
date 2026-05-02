@@ -1,6 +1,6 @@
 {
   "name": "@g-casau/rsfc-core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Zero-runtime-dependency RSFC parser and code generator",
   "license": "MIT",
   "type": "module",

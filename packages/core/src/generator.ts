@@ -214,6 +214,8 @@ function extractDefineProps(lines: SetupLine[]): {
  *  - `body`     — everything else, placed inside the component function
  *
  * Handles multi-line imports by tracking open `{` depth.
+ * Tracks template literal depth so that `import` keywords inside backtick
+ * strings (e.g. code-example constants) are not mistaken for module imports.
  */
 function splitSetupContent(
   content: string,
@@ -223,13 +225,20 @@ function splitSetupContent(
   const imports: SetupLine[] = [];
   const body: SetupLine[] = [];
   let inImport = false;
+  // Tracks how many backtick template literals are currently open across lines.
+  // Simplified: does not model ${ } expression nesting, which is sufficient for
+  // the static import hoisting heuristic used here.
+  let templateDepth = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const text = lines[i] ?? "";
     const srcLine = startLine + i;
     const trimmed = text.trimStart();
 
-    if (!inImport && /^import[\s{*"'`]/.test(trimmed) && !/^import\s*\(/.test(trimmed)) {
+    // Only classify as an import when we are at the top scope level.
+    const atTopLevel = templateDepth === 0;
+
+    if (!inImport && atTopLevel && /^import[\s{*"'`]/.test(trimmed) && !/^import\s*\(/.test(trimmed)) {
       inImport = true;
       imports.push({ text, srcLine });
       // Complete on the same line when it already has  from '...'  or is a bare side-effect import
@@ -243,6 +252,26 @@ function splitSetupContent(
       }
     } else {
       body.push({ text, srcLine });
+    }
+
+    // Scan the line for unescaped backticks to maintain template literal depth.
+    // Single/double quoted strings are skipped so backticks inside them are ignored.
+    let inSingle = false;
+    let inDouble = false;
+    for (let j = 0; j < text.length; j++) {
+      const ch = text[j]!;
+      if (ch === "\\") { j++; continue; }
+      if (inSingle) {
+        if (ch === "'") inSingle = false;
+      } else if (inDouble) {
+        if (ch === '"') inDouble = false;
+      } else if (templateDepth > 0) {
+        if (ch === "`") templateDepth--;
+      } else {
+        if (ch === "'") inSingle = true;
+        else if (ch === '"') inDouble = true;
+        else if (ch === "`") templateDepth++;
+      }
     }
   }
 
