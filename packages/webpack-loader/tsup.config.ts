@@ -10,5 +10,5 @@ export default defineConfig({
   splitting: false,
   treeshake: true,
   outDir: "dist",
-  external: ["webpack", "@rsfc/core"],
+  external: ["webpack", "@g-casau/rsfc-core"],
 });

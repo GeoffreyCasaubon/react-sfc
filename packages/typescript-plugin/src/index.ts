@@ -2,7 +2,7 @@ import type tsServer from "typescript/lib/tsserverlibrary";
 import { makeVirtualContent } from "./virtual.js";
 
 // ---------------------------------------------------------------------------
-// @rsfc/typescript-plugin
+// @g-casau/rsfc-typescript-plugin
 //
 // A TypeScript Language Service Plugin that gives IDEs accurate prop types
 // when importing `.rsfc` components.
@@ -16,7 +16,7 @@ import { makeVirtualContent } from "./virtual.js";
 //
 // Usage (tsconfig.json):
 //   "compilerOptions": {
-//     "plugins": [{ "name": "@rsfc/typescript-plugin" }]
+//     "plugins": [{ "name": "@g-casau/rsfc-typescript-plugin" }]
 //   }
 // ---------------------------------------------------------------------------
 

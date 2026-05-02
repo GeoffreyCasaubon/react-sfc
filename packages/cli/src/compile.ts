@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { transform } from "esbuild";
-import { parse, generate, compileCss, buildStyleIIFE } from "@rsfc/core";
-import type { RsfcDescriptor, VirtualModule } from "@rsfc/core";
+import { parse, generate, compileCss, buildStyleIIFE } from "@g-casau/rsfc-core";
+import type { RsfcDescriptor, VirtualModule } from "@g-casau/rsfc-core";
 
 // ---------------------------------------------------------------------------
 // Public API

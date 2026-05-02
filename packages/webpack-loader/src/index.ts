@@ -1,6 +1,6 @@
 import type { LoaderContext } from "webpack";
-import { parse, generate, compileCss, buildStyleIIFE } from "@rsfc/core";
-import type { VirtualModule } from "@rsfc/core";
+import { parse, generate, compileCss, buildStyleIIFE } from "@g-casau/rsfc-core";
+import type { VirtualModule } from "@g-casau/rsfc-core";
 
 export interface RsfcLoaderOptions {
   // Reserved for future options (e.g. include/exclude patterns)
@@ -14,7 +14,7 @@ export interface RsfcLoaderOptions {
  * // webpack.config.js / next.config.ts
  * config.module.rules.push({
  *   test: /\.rsfc$/,
- *   use: [{ loader: "@rsfc/webpack-loader" }],
+ *   use: [{ loader: "@g-casau/rsfc-webpack-loader" }],
  * });
  * ```
  */

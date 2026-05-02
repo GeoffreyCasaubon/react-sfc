@@ -1,4 +1,4 @@
-import { parse } from "@rsfc/core";
+import { parse } from "@g-casau/rsfc-core";
 
 // ---------------------------------------------------------------------------
 // Virtual TypeScript content generation

@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   webpack(config) {
     // Webpack applies loaders right-to-left (last entry in use[] runs first):
-    //   1. @rsfc/webpack-loader  — parses .rsfc → JSX + inline styles   (runs first)
+    //   1. @g-casau/rsfc-webpack-loader  — parses .rsfc → JSX + inline styles   (runs first)
     //   2. babel-loader          — transforms JSX + TS → plain JS        (runs second)
     config.module.rules.push({
       test: /\.rsfc$/,
@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
             ],
           },
         },
-        { loader: "@rsfc/webpack-loader", options: {} },
+        { loader: "@g-casau/rsfc-webpack-loader", options: {} },
       ],
     });
     return config;

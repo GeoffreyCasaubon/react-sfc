@@ -10,7 +10,7 @@ export default defineConfig([
     sourcemap: false,
     clean: false,
     banner: { js: "#!/usr/bin/env node" },
-    // Bundle @rsfc/core so the CLI binary is self-contained
+    // Bundle @g-casau/rsfc-core so the CLI binary is self-contained
     external: ["sass", "less", "stylus"],
   },
   {

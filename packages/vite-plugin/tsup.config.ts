@@ -11,5 +11,5 @@ export default defineConfig({
   treeshake: true,
   outDir: "dist",
   cjsInterop: true,
-  external: ["vite", "@rsfc/core"],
+  external: ["vite", "@g-casau/rsfc-core"],
 });

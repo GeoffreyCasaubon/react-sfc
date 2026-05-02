@@ -1,5 +1,5 @@
 {
-  "name": "@rsfc/core",
+  "name": "@g-casau/rsfc-core",
   "version": "1.0.0",
   "description": "Zero-runtime-dependency RSFC parser and code generator",
   "license": "MIT",
@@ -34,5 +34,8 @@
   },
   "devDependencies": {
     "@types/node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -1,7 +1,7 @@
 import type { Plugin, TransformResult, ModuleNode } from "vite";
 import { transformWithEsbuild } from "vite";
-import { parse, generate } from "@rsfc/core";
-import type { CustomBlock } from "@rsfc/core";
+import { parse, generate } from "@g-casau/rsfc-core";
+import type { CustomBlock } from "@g-casau/rsfc-core";
 
 export interface RsfcPluginOptions {
   /**
@@ -68,7 +68,7 @@ function makeFilter(
  * @example
  * ```ts
  * // vite.config.ts
- * import rsfc from "@rsfc/vite-plugin";
+ * import rsfc from "@g-casau/rsfc-vite-plugin";
  * export default defineConfig({ plugins: [rsfc()] });
  * ```
  */

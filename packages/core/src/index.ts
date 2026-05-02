@@ -1,4 +1,4 @@
-// @rsfc/core — public API
+// @g-casau/rsfc-core — public API
 
 export type {
   RsfcBlockKind,

@@ -4,7 +4,7 @@ import { useState } from "react"
 const framework = "Next.js"
 const reactVersion = "19"
 const features: Array<{ id: number; name: string; done: boolean }> = [
-  { id: 1, name: "Parser  (@rsfc/core)", done: true },
+  { id: 1, name: "Parser  (@g-casau/rsfc-core)", done: true },
   { id: 2, name: "Generator + V3 source maps", done: true },
   { id: 3, name: "Vite plugin", done: true },
   { id: 4, name: "Webpack loader", done: true },

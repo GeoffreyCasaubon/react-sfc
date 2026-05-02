@@ -38,7 +38,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@rsfc/core':
+      '@g-casau/rsfc-core':
         specifier: workspace:*
         version: link:../core
       esbuild:
@@ -66,7 +66,7 @@ importers:
 
   packages/playground-next:
     dependencies:
-      '@rsfc/webpack-loader':
+      '@g-casau/rsfc-webpack-loader':
         specifier: workspace:*
         version: link:../webpack-loader
       next:
@@ -106,7 +106,7 @@ importers:
 
   packages/playground-vite:
     dependencies:
-      '@rsfc/vite-plugin':
+      '@g-casau/rsfc-vite-plugin':
         specifier: workspace:*
         version: link:../vite-plugin
       react:
@@ -134,7 +134,7 @@ importers:
 
   packages/typescript-plugin:
     dependencies:
-      '@rsfc/core':
+      '@g-casau/rsfc-core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -144,7 +144,7 @@ importers:
 
   packages/vite-plugin:
     dependencies:
-      '@rsfc/core':
+      '@g-casau/rsfc-core':
         specifier: workspace:*
         version: link:../core
       less:
@@ -166,7 +166,7 @@ importers:
 
   packages/webpack-loader:
     dependencies:
-      '@rsfc/core':
+      '@g-casau/rsfc-core':
         specifier: workspace:*
         version: link:../core
       less:

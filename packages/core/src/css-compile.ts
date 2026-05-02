@@ -2,7 +2,7 @@ import type { VirtualModule } from "./types.js";
 
 // ---------------------------------------------------------------------------
 // Minimal type shapes for optional CSS preprocessor peer deps.
-// Defined inline to keep @rsfc/core free of peer type dependencies.
+// Defined inline to keep @g-casau/rsfc-core free of peer type dependencies.
 // ---------------------------------------------------------------------------
 
 interface SassLike {
@@ -30,7 +30,7 @@ interface StylusLike {
  * installed (e.g. "Install sass to use <style lang=scss>").
  * Returns the raw source unchanged for plain `.css` virtual modules.
  *
- * Used by `@rsfc/webpack-loader` and `@rsfc/cli` to inline styles.
+ * Used by `@g-casau/rsfc-webpack-loader` and `@g-casau/rsfc-cli` to inline styles.
  */
 export async function compileCss(vm: VirtualModule): Promise<string> {
   if (vm.id.endsWith(".scss") || vm.id.endsWith(".sass")) {
@@ -83,7 +83,7 @@ export async function compileCss(vm: VirtualModule): Promise<string> {
  * The `typeof document !== 'undefined'` guard makes it SSR-safe: the
  * injection is a no-op on the server.
  *
- * Used by `@rsfc/webpack-loader` and `@rsfc/cli` where Vite's native
+ * Used by `@g-casau/rsfc-webpack-loader` and `@g-casau/rsfc-cli` where Vite's native
  * CSS virtual module pipeline is unavailable.
  */
 export function buildStyleIIFE(css: string, index: number): string {

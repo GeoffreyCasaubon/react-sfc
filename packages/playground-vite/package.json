@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@rsfc/vite-plugin": "workspace:*",
+    "@g-casau/rsfc-vite-plugin": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

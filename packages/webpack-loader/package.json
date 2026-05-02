@@ -1,5 +1,5 @@
 {
-  "name": "@rsfc/webpack-loader",
+  "name": "@g-casau/rsfc-webpack-loader",
   "version": "1.0.0",
   "description": "Webpack loader for RSFC (React Single File Components)",
   "license": "MIT",
@@ -33,7 +33,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@rsfc/core": "workspace:*"
+    "@g-casau/rsfc-core": "workspace:*"
   },
   "peerDependencies": {
     "webpack": ">=5.0.0",
@@ -56,5 +56,8 @@
     "@types/node": ">=18.0.0",
     "@types/webpack": "^5.28.5",
     "webpack": "^5.96.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

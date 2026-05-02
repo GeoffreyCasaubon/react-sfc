@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import rsfc from "@rsfc/vite-plugin";
+import rsfc from "@g-casau/rsfc-vite-plugin";
 
 export default defineConfig({
   plugins: [

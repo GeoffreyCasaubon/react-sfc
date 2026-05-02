@@ -38,10 +38,10 @@ const [count, setCount] = useState(0)
 
 | Package | Description |
 |---------|-------------|
-| [`@rsfc/core`](#rsfc-core) | Parser + code generator — zero runtime deps |
-| [`@rsfc/vite-plugin`](#vite) | Vite plugin |
-| [`@rsfc/webpack-loader`](#webpack--nextjs) | Webpack loader |
-| [`@rsfc/cli`](#cli) | CLI tool (`rsfc compile`, `rsfc parse`) |
+| [`@g-casau/rsfc-core`](#rsfc-core) | Parser + code generator — zero runtime deps |
+| [`@g-casau/rsfc-vite-plugin`](#vite) | Vite plugin |
+| [`@g-casau/rsfc-webpack-loader`](#webpack--nextjs) | Webpack loader |
+| [`@g-casau/rsfc-cli`](#cli) | CLI tool (`rsfc compile`, `rsfc parse`) |
 
 ---
 
@@ -57,7 +57,7 @@ const [count, setCount] = useState(0)
 - **`<clientScript>`** — browser-only code (skipped during SSR)
 - **V3 source maps** — column-accurate, always emitted
 - **TypeScript strict** — the entire toolchain is typed with zero `any`
-- **Zero runtime in core** — `@rsfc/core` has no dependencies at all
+- **Zero runtime in core** — `@g-casau/rsfc-core` has no dependencies at all
 
 ---
 
@@ -66,14 +66,14 @@ const [count, setCount] = useState(0)
 ### Vite
 
 ```bash
-pnpm add -D @rsfc/vite-plugin @vitejs/plugin-react
+pnpm add -D @g-casau/rsfc-vite-plugin @vitejs/plugin-react
 ```
 
 ```ts
 // vite.config.ts
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
-import rsfc from "@rsfc/vite-plugin"
+import rsfc from "@g-casau/rsfc-vite-plugin"
 
 export default defineConfig({
   plugins: [rsfc(), react()],
@@ -94,7 +94,7 @@ declare module "*.rsfc" {
 ### Webpack / Next.js
 
 ```bash
-pnpm add -D @rsfc/webpack-loader
+pnpm add -D @g-casau/rsfc-webpack-loader
 ```
 
 ```ts
@@ -115,7 +115,7 @@ const nextConfig: NextConfig = {
             ],
           },
         },
-        { loader: "@rsfc/webpack-loader" },
+        { loader: "@g-casau/rsfc-webpack-loader" },
       ],
     })
     return config
@@ -125,7 +125,7 @@ const nextConfig: NextConfig = {
 export default nextConfig
 ```
 
-> **Note:** Webpack processes loaders right-to-left. `@rsfc/webpack-loader` runs
+> **Note:** Webpack processes loaders right-to-left. `@g-casau/rsfc-webpack-loader` runs
 > first (compiles `.rsfc` → JSX/TS), then `babel-loader` strips types and JSX.
 
 ---
@@ -353,7 +353,7 @@ A polymorphic button with primary and ghost variants.
 Extract it programmatically:
 
 ```ts
-import { parseFile } from "@rsfc/cli"
+import { parseFile } from "@g-casau/rsfc-cli"
 
 const { docs } = parseFile("./src/Button.rsfc")
 console.log(docs?.content)  // Markdown string
@@ -368,7 +368,7 @@ Vite plugin via `customBlockTransforms`:
 
 ```ts
 // vite.config.ts
-import rsfc from "@rsfc/vite-plugin"
+import rsfc from "@g-casau/rsfc-vite-plugin"
 
 export default {
   plugins: [
@@ -407,7 +407,7 @@ query GetUser($id: ID!) {
 ## CLI
 
 ```bash
-pnpm add -g @rsfc/cli
+pnpm add -g @g-casau/rsfc-cli
 ```
 
 ### `rsfc compile`
@@ -449,14 +449,14 @@ The [`examples/`](./examples) directory contains ready-to-read components:
 
 ## API Reference
 
-### `@rsfc/core`
+### `@g-casau/rsfc-core`
 
 ```ts
-import { parse, generate, scopeCss } from "@rsfc/core"
+import { parse, generate, scopeCss } from "@g-casau/rsfc-core"
 import type {
   RsfcDescriptor, RsfcBlock, StyleBlock, CustomBlock,
   GeneratedOutput, VirtualModule, RawSourceMap,
-} from "@rsfc/core"
+} from "@g-casau/rsfc-core"
 ```
 
 #### `parse(source, options): RsfcDescriptor`
@@ -494,7 +494,7 @@ interface VirtualModule {
 }
 ```
 
-### `@rsfc/vite-plugin` options
+### `@g-casau/rsfc-vite-plugin` options
 
 ```ts
 interface RsfcPluginOptions {
@@ -506,10 +506,10 @@ interface RsfcPluginOptions {
 }
 ```
 
-### `@rsfc/cli` — programmatic API
+### `@g-casau/rsfc-cli` — programmatic API
 
 ```ts
-import { compileFile, parseFile } from "@rsfc/cli"
+import { compileFile, parseFile } from "@g-casau/rsfc-cli"
 
 const js = await compileFile("./src/Button.rsfc")   // → JS string
 const descriptor = parseFile("./src/Button.rsfc")   // → RsfcDescriptor
@@ -523,10 +523,10 @@ const descriptor = parseFile("./src/Button.rsfc")   // → RsfcDescriptor
 react-sfc/
 ├── examples/             Annotated example .rsfc components
 ├── packages/
-│   ├── core/             @rsfc/core      — parser + generator, zero deps
-│   ├── vite-plugin/      @rsfc/vite-plugin
-│   ├── webpack-loader/   @rsfc/webpack-loader
-│   ├── cli/              @rsfc/cli
+│   ├── core/             @g-casau/rsfc-core      — parser + generator, zero deps
+│   ├── vite-plugin/      @g-casau/rsfc-vite-plugin
+│   ├── webpack-loader/   @g-casau/rsfc-webpack-loader
+│   ├── cli/              @g-casau/rsfc-cli
 │   ├── playground-vite/  Vite + React 19 integration sandbox
 │   └── playground-next/  Next.js 15 + React 19 integration sandbox
 └── vitest.workspace.ts
