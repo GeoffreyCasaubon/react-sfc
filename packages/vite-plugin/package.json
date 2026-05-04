@@ -1,6 +1,6 @@
 {
   "name": "@g-casau/rsfc-vite-plugin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Vite plugin for RSFC (React Single File Components)",
   "license": "MIT",
   "type": "module",

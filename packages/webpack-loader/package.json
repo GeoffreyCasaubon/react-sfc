@@ -1,6 +1,6 @@
 {
   "name": "@g-casau/rsfc-webpack-loader",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Webpack loader for RSFC (React Single File Components)",
   "license": "MIT",
   "type": "module",

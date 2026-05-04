@@ -1,6 +1,6 @@
 {
   "name": "@g-casau/rsfc-cli",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "CLI for React Single File Components — compile and inspect .rsfc files",
   "license": "MIT",
   "type": "module",

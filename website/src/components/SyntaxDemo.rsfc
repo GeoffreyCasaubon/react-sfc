@@ -6,52 +6,52 @@ const [active, setActive] = useState<'script' | 'template' | 'style'>('script')
 const blocks = {
   script: {
     label: '<script setup>',
-    lang: 'typescript',
-    code: `import { useState } from 'react'
-
-// Declare reactive state directly —
-// no wrapping function needed.
-const [count, setCount] = useState(0)
-const double = count * 2`,
+    lines: [
+      `import { useState } from 'react'`,
+      ``,
+      `// Declare state directly —`,
+      `// no wrapping function needed.`,
+      `const [count, setCount] = useState(0)`,
+      `const double = count * 2`,
+    ],
   },
   template: {
     label: '<template>',
-    lang: 'jsx',
-    code: `<div className={styles.card}>
-  <h2 className={styles.title}>Counter</h2>
-
-  <p className={styles.value}>{count}</p>
-  <p className={styles.hint}>× 2 = {double}</p>
-
-  <button
-    className={styles.btn}
-    onClick={() => setCount(count + 1)}
-  >
-    Increment
-  </button>
-</div>`,
+    lines: [
+      `<div className={styles.card}>`,
+      `  <h2 className={styles.title}>Counter</h2>`,
+      ``,
+      `  <p className={styles.value}>{count}</p>`,
+      `  <p className={styles.hint}>× 2 = {double}</p>`,
+      ``,
+      `  <button`,
+      `    className={styles.btn}`,
+      `    onClick={() => setCount(count + 1)}`,
+      `  >`,
+      `    Increment`,
+      `  </button>`,
+      `</div>`,
+    ],
   },
   style: {
     label: '<style module>',
-    lang: 'css',
-    code: `/* Styles are scoped via CSS Modules.
-   The 'styles' object is auto-injected. */
-
-.card {
-  padding: 2rem;
-  border-radius: 12px;
-  background: #1e1e2e;
-  text-align: center;
-}
-
-.btn {
-  background: #646cff;
-  color: #fff;
-  border: none;
-  padding: 0.5rem 1.25rem;
-  border-radius: 6px;
-  cursor: pointer;
-}`,
+    lines: [
+      `/* Styles are scoped via CSS Modules. */`,
+      `/* The 'styles' object is auto-injected. */`,
+      ``,
+      `.card {`,
+      `  padding: 2rem;`,
+      `  border-radius: 8px;`,
+      `  background: #1b211d;`,
+      `}`,
+      ``,
+      `.btn {`,
+      `  background: #42b883;`,
+      `  color: #003823;`,
+      `  border: none;`,
+      `  cursor: pointer;`,
+      `}`,
+    ],
   },
 }
 
@@ -59,127 +59,197 @@ const tabs = (['script', 'template', 'style'] as const)
 </script>
 
 <template>
-<section className={styles.section}>
-  <h2 className={styles.heading}>Clean, familiar syntax</h2>
-  <p className={styles.sub}>
-    Three blocks. One file. Inspired by Vue SFCs, built for React.
-  </p>
-
-  <div className={styles.editor}>
-    <div className={styles.titleBar}>
-      <span className={styles.dot} style={{ background: '#ff5f57' }} />
-      <span className={styles.dot} style={{ background: '#ffbd2e' }} />
-      <span className={styles.dot} style={{ background: '#28c840' }} />
-      <span className={styles.filename}>Counter.rsfc</span>
+<section id="syntax" className={styles.section}>
+  <div className={styles.inner}>
+    <div className={styles.header}>
+      <span className={styles.eyebrow}>SYNTAX</span>
+      <h2 className={styles.heading}>Clean, familiar syntax.</h2>
+      <p className={styles.sub}>
+        Three blocks. One file. Inspired by Vue SFCs, built for React.
+      </p>
     </div>
 
-    <div className={styles.tabs}>
-      {tabs.map((t) => (
-        <button
-          key={t}
-          onClick={() => setActive(t)}
-          className={active === t ? styles.tabActive : styles.tab}
-        >
-          {blocks[t].label}
-        </button>
-      ))}
-    </div>
+    <div className={styles.editor}>
+      <div className={styles.titleBar}>
+        <div className={styles.dots}>
+          <span className={styles.dotRed} />
+          <span className={styles.dotYellow} />
+          <span className={styles.dotGreen} />
+        </div>
+        <span className={styles.filename}>Counter.rsfc</span>
+      </div>
 
-    <pre className={styles.code}><code>{blocks[active].code}</code></pre>
+      <div className={styles.tabs}>
+        {tabs.map((t) => (
+          <button
+            key={t}
+            onClick={() => setActive(t)}
+            className={active === t ? styles.tabActive : styles.tab}
+          >
+            {blocks[t].label}
+          </button>
+        ))}
+      </div>
+
+      <div className={styles.codeBody}>
+        {blocks[active].lines.map((line, i) => (
+          <div key={i} className={styles.codeLine}>
+            <span className={styles.lineNum}>{i + 1}</span>
+            <span className={styles.lineText}>{line || ' '}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   </div>
 </section>
 </template>
 
 <style module>
 .section {
-  padding: 6rem 2rem;
-  background: #0d0d1a;
+  padding: 5rem 1.5rem;
+  background: var(--bg);
   text-align: center;
+  border-top: 1px solid var(--border);
+}
+
+.inner {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 3rem;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--primary);
+  display: block;
+  margin-bottom: 0.75rem;
 }
 
 .heading {
-  font-size: clamp(2rem, 5vw, 2.8rem);
-  font-weight: 700;
-  color: #fff;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  line-height: 1.2;
   margin-bottom: 0.75rem;
-  letter-spacing: -0.02em;
 }
 
 .sub {
-  color: #475569;
-  font-size: 1.05rem;
-  margin-bottom: 3rem;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .editor {
   max-width: 680px;
   margin: 0 auto;
-  border: 1px solid #1a1a30;
-  border-radius: 14px;
+  border-radius: 8px;
   overflow: hidden;
   text-align: left;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid transparent;
+  background-image:
+    linear-gradient(var(--surface-0), var(--surface-0)),
+    linear-gradient(to right, var(--primary-bright), #61dafb);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 0 40px -10px rgba(66, 184, 131, 0.15);
 }
 
 .titleBar {
-  background: #13131f;
-  border-bottom: 1px solid #1a1a30;
-  padding: 0.75rem 1.2rem;
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border);
+  padding: 0.7rem 1rem;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
 }
 
-.dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-block;
+.dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dotRed {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.dotYellow {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: rgba(234, 179, 8, 0.2);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+}
+.dotGreen {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.4);
 }
 
 .filename {
-  color: #475569;
-  font-size: 0.82rem;
-  margin-left: 0.75rem;
-  font-family: monospace;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: 0.25rem;
 }
 
 .tabs {
-  background: #0f0f1c;
-  border-bottom: 1px solid #1a1a30;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
   display: flex;
-  padding: 0 0.5rem;
+  padding: 0 0.25rem;
 }
 
 .tab, .tabActive {
-  padding: 0.7rem 1rem;
+  padding: 0.65rem 0.9rem;
   border: none;
   border-bottom: 2px solid transparent;
   background: none;
-  font-size: 0.82rem;
-  font-family: monospace;
+  font-size: 0.78rem;
+  font-family: 'JetBrains Mono', monospace;
   cursor: pointer;
   margin-bottom: -1px;
-  transition: color 0.15s;
+  transition: color 0.15s, border-color 0.15s;
 }
 
-.tab { color: #475569; }
-.tab:hover { color: #94a3b8; }
+.tab { color: var(--text-muted); }
+.tab:hover { color: var(--text); }
 
 .tabActive {
-  color: #818cf8;
-  border-bottom-color: #646cff;
+  color: var(--primary);
+  border-bottom-color: var(--primary-bright);
 }
 
-.code {
-  margin: 0;
-  padding: 1.75rem;
-  background: #080812;
-  font-size: 0.84rem;
-  line-height: 1.75;
-  color: #94a3b8;
+.codeBody {
+  padding: 1.5rem;
+  background: var(--surface-0);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.83rem;
+  line-height: 1.8;
+  color: var(--text-muted);
   overflow-x: auto;
   min-height: 240px;
-  white-space: pre;
 }
+
+.codeLine {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.lineNum {
+  color: var(--outline);
+  text-align: right;
+  width: 1.2rem;
+  flex-shrink: 0;
+  user-select: none;
+  font-size: 0.78rem;
+}
+
+.lineText { color: var(--text-muted); }
 </style>

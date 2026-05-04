@@ -1,112 +1,149 @@
 <script setup lang="ts">
 const features = [
   {
-    icon: '📄',
+    icon: 'bolt',
+    color: 'primary' as const,
+    tag: 'COHESION',
     title: 'Single File',
-    desc: 'Script, template, and styles live together in one .rsfc file. No more scattered imports.',
+    desc: 'Script, template, and styles live together in one .rsfc file. No scattered imports — everything your component needs in one place.',
   },
   {
-    icon: '🔷',
-    title: 'TypeScript',
-    desc: 'Write <script setup lang="ts"> and get full type inference with zero config.',
-  },
-  {
-    icon: '🎨',
+    icon: 'layers',
+    color: 'secondary' as const,
+    tag: 'SCOPED',
     title: 'CSS Modules',
-    desc: 'Scoped styles via <style module>. The styles object is auto-injected — no collisions ever.',
+    desc: 'Scoped styles via <style module>. The styles object is auto-injected — zero class name collisions, ever.',
   },
   {
-    icon: '⚡',
+    icon: 'terminal',
+    color: 'primary' as const,
+    tag: 'PERFORMANCE',
     title: 'Vite HMR',
-    desc: 'Hot module replacement out of the box. Style-only changes update without re-rendering.',
-  },
-  {
-    icon: '🪝',
-    title: 'React Hooks',
-    desc: 'Use useState, useEffect, useMemo — all React hooks work naturally in script setup.',
-  },
-  {
-    icon: '🔌',
-    title: 'One-line setup',
-    desc: 'A single Vite plugin. Add rsfc() to your plugins array and you are done.',
+    desc: 'Hot module replacement out of the box. Style-only changes update without re-rendering the component tree.',
   },
 ]
 </script>
 
 <template>
-<section className={styles.section}>
-  <h2 className={styles.heading}>Everything you need</h2>
-  <p className={styles.sub}>Built for React developers who want cleaner, more expressive component files.</p>
-  <div className={styles.grid}>
-    {features.map((f) => (
-      <div key={f.title} className={styles.card}>
-        <span className={styles.icon}>{f.icon}</span>
-        <h3 className={styles.cardTitle}>{f.title}</h3>
-        <p className={styles.cardDesc}>{f.desc}</p>
-      </div>
-    ))}
+<section id="features" className={styles.section}>
+  <div className={styles.inner}>
+    <div className={styles.header}>
+      <span className={styles.eyebrow}>ENGINEERING SPECS</span>
+      <h2 className={styles.heading}>Precision Built Core.</h2>
+    </div>
+    <div className={styles.grid}>
+      {features.map((f) => (
+        <div key={f.title} className={styles.card}>
+          <span
+            className={`material-symbols-outlined ${styles.icon} ${f.color === 'secondary' ? styles.iconSecondary : styles.iconPrimary}`}
+          >
+            {f.icon}
+          </span>
+          <h3 className={styles.cardTitle}>{f.title}</h3>
+          <p className={styles.cardDesc}>{f.desc}</p>
+          <div className={`${styles.learnMore} ${f.color === 'secondary' ? styles.learnMoreSecondary : styles.learnMorePrimary}`}>
+            <span>LEARN MORE</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_forward</span>
+          </div>
+        </div>
+      ))}
+    </div>
   </div>
 </section>
 </template>
 
 <style module>
 .section {
-  padding: 6rem 2rem;
-  background: #0a0a14;
-  text-align: center;
+  padding: 5rem 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.inner {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 3rem;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--primary);
+  display: block;
+  margin-bottom: 0.5rem;
 }
 
 .heading {
-  font-size: clamp(2rem, 5vw, 2.8rem);
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 0.75rem;
-  letter-spacing: -0.02em;
-}
-
-.sub {
-  color: #475569;
-  font-size: 1.05rem;
-  margin-bottom: 3.5rem;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  line-height: 1.2;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-  gap: 1.25rem;
-  max-width: 960px;
-  margin: 0 auto;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
 }
 
 .card {
-  background: #0d0d1a;
-  border: 1px solid #1a1a30;
-  border-radius: 14px;
-  padding: 1.75rem;
-  text-align: left;
-  transition: border-color 0.2s, transform 0.2s;
+  background: var(--bg);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: background 0.2s;
 }
-.card:hover {
-  border-color: rgba(100, 108, 255, 0.4);
-  transform: translateY(-3px);
-}
+.card:hover { background: var(--surface-2); }
 
 .icon {
-  font-size: 1.6rem;
-  display: block;
-  margin-bottom: 1rem;
+  font-size: 1.875rem;
 }
 
+.iconPrimary { color: var(--primary); }
+.iconSecondary { color: var(--secondary); }
+
 .cardTitle {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #e2e8f0;
-  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  line-height: 1.2;
 }
 
 .cardDesc {
-  color: #475569;
-  font-size: 0.88rem;
-  line-height: 1.7;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.learnMore {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  transition: opacity 0.2s;
+  padding-top: 0.5rem;
+}
+
+.card:hover .learnMore { opacity: 1; }
+
+.learnMorePrimary { color: var(--primary); }
+.learnMoreSecondary { color: var(--secondary); }
+
+@media (max-width: 700px) {
+  .grid { grid-template-columns: 1fr; }
 }
 </style>

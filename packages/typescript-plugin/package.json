@@ -1,6 +1,6 @@
 {
   "name": "@g-casau/rsfc-typescript-plugin",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "TypeScript language service plugin for RSFC files — enables prop inference in any IDE that supports tsserver",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
