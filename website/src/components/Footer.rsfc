@@ -1,45 +1,140 @@
 <template>
 <footer className={styles.footer}>
-  <p className={styles.text}>
-    Built with{' '}
-    <code className={styles.code}>.rsfc</code>
-    {' '}—{' '}
-    <a
-      href="https://github.com/GeoffreyCasaubon/react-sfc"
-      target="_blank"
-      rel="noreferrer"
-      className={styles.link}
-    >
-      GeoffreyCasaubon/react-sfc
-    </a>
-  </p>
+  <div className={styles.inner}>
+    <div className={styles.brand}>
+      <span className={styles.logo}>RSFC</span>
+      <p className={styles.copy}>
+        © 2024 RSFC. MIT License.<br />
+        Vue-style SFCs for React.
+      </p>
+    </div>
+
+    <div className={styles.col}>
+      <span className={styles.colTitle}>Resources</span>
+      <ul className={styles.colList}>
+        <li><a href="#features" className={styles.colLink}>Features</a></li>
+        <li><a href="#syntax" className={styles.colLink}>Examples</a></li>
+        <li><a href="#get-started" className={styles.colLink}>Get Started</a></li>
+      </ul>
+    </div>
+
+    <div className={styles.col}>
+      <span className={styles.colTitle}>Project</span>
+      <ul className={styles.colList}>
+        <li>
+          <a
+            href="https://github.com/GeoffreyCasaubon/react-sfc"
+            target="_blank"
+            rel="noreferrer"
+            className={styles.colLink}
+          >
+            GitHub
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://www.npmjs.com/package/@g-casau/rsfc-vite-plugin"
+            target="_blank"
+            rel="noreferrer"
+            className={styles.colLink}
+          >
+            npm
+          </a>
+        </li>
+        <li>
+          <a
+            href="https://github.com/GeoffreyCasaubon/react-sfc/issues"
+            target="_blank"
+            rel="noreferrer"
+            className={styles.colLink}
+          >
+            Issues
+          </a>
+        </li>
+      </ul>
+    </div>
+
+  </div>
 </footer>
 </template>
 
 <style module>
 .footer {
-  padding: 2.5rem 2rem;
-  text-align: center;
-  border-top: 1px solid #1a1a30;
-  background: #0d0d1a;
+  background: var(--surface-0);
+  border-top: 1px solid var(--border);
+  padding: 3rem 1.5rem;
 }
 
-.text {
-  color: #334155;
-  font-size: 0.85rem;
+.inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 2rem;
 }
 
-.code {
-  color: #475569;
-  background: #13131f;
-  padding: 0.1em 0.4em;
-  border-radius: 4px;
-  font-size: 0.9em;
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.link {
-  color: #646cff;
+.logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.copy {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  line-height: 1.8;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.colTitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary-bright);
+}
+
+.colList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.colLink {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
   transition: color 0.15s;
+  text-underline-offset: 4px;
 }
-.link:hover { color: #818cf8; text-decoration: underline; }
+.colLink:hover {
+  color: var(--secondary);
+  text-decoration: underline;
+}
+
+@media (max-width: 700px) {
+  .inner { grid-template-columns: 1fr 1fr; }
+}
 </style>
