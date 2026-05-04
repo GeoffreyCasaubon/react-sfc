@@ -11,4 +11,5 @@ export default defineConfig({
   treeshake: true,
   outDir: "dist",
   cjsInterop: true,
+  external: ["sass", "less", "stylus"],
 });
