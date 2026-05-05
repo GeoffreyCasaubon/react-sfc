@@ -27,6 +27,10 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Remove token placeholder so OIDC auth is used
+        run: npm config delete //registry.npmjs.org/:_authToken || true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
