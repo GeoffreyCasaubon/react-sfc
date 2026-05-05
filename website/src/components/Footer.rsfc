@@ -4,7 +4,7 @@
     <div className={styles.brand}>
       <span className={styles.logo}>RSFC</span>
       <p className={styles.copy}>
-        © 2024 RSFC. MIT License.<br />
+        © 2026 Geoffrey Casaubon. MIT License.<br />
         Vue-style SFCs for React.
       </p>
     </div>

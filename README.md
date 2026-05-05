@@ -557,4 +557,4 @@ pnpm typecheck        # tsc --noEmit across all packages
 
 ## License
 
-MIT
+MIT © 2026 Geoffrey Casaubon
