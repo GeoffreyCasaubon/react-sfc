@@ -9,7 +9,6 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
 
 jobs:
   release:
@@ -29,9 +28,6 @@ jobs:
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
 
-      - name: Remove token placeholder so OIDC auth is used
-        run: sed -i '/^\/\/registry\.npmjs\.org\/:_authToken/d' "$NPM_CONFIG_USERCONFIG"
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -46,4 +42,4 @@ jobs:
           commit: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: "true"
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
