@@ -4,6 +4,8 @@ import {
   Diagnostic,
   DiagnosticSeverity,
   DocumentSymbol,
+  FoldingRange,
+  FoldingRangeParams,
   Hover,
   InitializeParams,
   InitializeResult,
@@ -17,10 +19,26 @@ import {
   TextDocuments,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { parse, type RsfcBlock, type RsfcDescriptor } from "@g-casau/rsfc-core";
+import {
+  parse,
+  type RsfcBlock,
+  type RsfcDescriptor,
+  type SourceLocation,
+} from "@g-casau/rsfc-core";
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
+
+// Minimal shape shared by RsfcBlock and CustomBlock — avoids unsafe casts
+interface LocatedBlock {
+  lang?: string | undefined;
+  attrs: Record<string, string | true>;
+  loc: SourceLocation;
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle
+// ---------------------------------------------------------------------------
 
 connection.onInitialize((_params: InitializeParams): InitializeResult => {
   return {
@@ -32,24 +50,106 @@ connection.onInitialize((_params: InitializeParams): InitializeResult => {
       },
       hoverProvider: true,
       documentSymbolProvider: true,
+      foldingRangeProvider: true,
     },
   };
 });
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function safeParse(text: string, filename: string): RsfcDescriptor | null {
+  try {
+    return parse(text, { filename });
+  } catch {
+    return null;
+  }
+}
+
+/** Walks backwards from a block's content start to find the opening `<`. */
+function findOpenTagOffset(text: string, contentStart: number): number {
+  let i = contentStart - 1;
+  while (i >= 0 && text[i] !== "<") {
+    i--;
+  }
+  return i >= 0 ? i : contentStart;
+}
+
+/** Finds the end of a closing tag starting at or after `contentEnd`. */
+function findCloseTagEnd(
+  text: string,
+  contentEnd: number,
+  tagName: string,
+): number {
+  const closeTag = `</${tagName}>`;
+  const idx = text.indexOf(closeTag, contentEnd);
+  return idx >= 0 ? idx + closeTag.length : contentEnd;
+}
+
+function buildStyleLabel(style: LocatedBlock, index: number): string {
+  const parts = ["style"];
+  if (style.lang) parts.push(`lang="${style.lang}"`);
+  if (style.attrs["scoped"] === true) parts.push("scoped");
+  const mod = style.attrs["module"];
+  if (mod !== undefined) {
+    parts.push(mod === true ? "module" : `module="${mod}"`);
+  }
+  if (index > 0) parts.push(`(${index + 1})`);
+  return parts.join(" ");
+}
+
+function defaultLang(blockName: string): string {
+  if (blockName === "template") return "tsx";
+  if (blockName === "docs") return "markdown";
+  return "ts";
+}
+
+function formatAttrs(attrs: Record<string, string | true>): string {
+  return Object.entries(attrs)
+    .map(([k, v]) => (v === true ? `\`${k}\`` : `\`${k}="${v}"\``))
+    .join(", ");
+}
+
+function findBlockAtOffset(
+  descriptor: RsfcDescriptor,
+  offset: number,
+): { name: string; block: LocatedBlock } | null {
+  const candidates: Array<{ name: string; block: LocatedBlock | null }> = [
+    { name: "script", block: descriptor.script },
+    { name: "script setup", block: descriptor.scriptSetup },
+    { name: "clientScript", block: descriptor.clientScript },
+    { name: "template", block: descriptor.template },
+    { name: "docs", block: descriptor.docs },
+    ...descriptor.styles.map((s, i) => ({
+      name: buildStyleLabel(s, i),
+      block: s as LocatedBlock,
+    })),
+    ...descriptor.customBlocks.map((c) => ({
+      name: c.tag,
+      block: c as LocatedBlock,
+    })),
+  ];
+
+  for (const { name, block } of candidates) {
+    if (!block) continue;
+    if (offset >= block.loc.start.offset && offset <= block.loc.end.offset) {
+      return { name, block };
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Diagnostics
 // ---------------------------------------------------------------------------
 
-documents.onDidChangeContent((change) => {
-  validateDocument(change.document);
-});
-
-documents.onDidOpen((event) => {
-  validateDocument(event.document);
-});
+documents.onDidChangeContent((change) => validateDocument(change.document));
+documents.onDidOpen((event) => validateDocument(event.document));
 
 function validateDocument(doc: TextDocument): void {
-  const descriptor = parse(doc.getText(), { filename: doc.uri });
+  const descriptor = safeParse(doc.getText(), doc.uri);
+  if (!descriptor) return;
 
   const diagnostics: Diagnostic[] = descriptor.errors.map((err) => ({
     severity: DiagnosticSeverity.Error,
@@ -72,63 +172,41 @@ connection.onDocumentSymbol((params) => {
   const doc = documents.get(params.textDocument.uri);
   if (!doc) return [];
 
-  const descriptor = parse(doc.getText(), { filename: doc.uri });
+  const descriptor = safeParse(doc.getText(), doc.uri);
+  if (!descriptor) return [];
+
   const symbols: DocumentSymbol[] = [];
 
-  const addBlock = (
-    label: string,
-    kind: SymbolKind,
-    block: RsfcBlock | null,
-  ) => {
-    if (!block) return;
+  const addSymbol = (label: string, kind: SymbolKind, loc: SourceLocation) => {
     const range = {
-      start: doc.positionAt(block.loc.start.offset),
-      end: doc.positionAt(block.loc.end.offset),
+      start: doc.positionAt(loc.start.offset),
+      end: doc.positionAt(loc.end.offset),
     };
     symbols.push({ name: label, kind, range, selectionRange: range });
   };
 
-  addBlock("script", SymbolKind.Module, descriptor.script);
-  addBlock("script setup", SymbolKind.Module, descriptor.scriptSetup);
-  addBlock("clientScript", SymbolKind.Module, descriptor.clientScript);
-  addBlock("template", SymbolKind.Class, descriptor.template);
+  if (descriptor.script)
+    addSymbol("script", SymbolKind.Module, descriptor.script.loc);
+  if (descriptor.scriptSetup)
+    addSymbol("script setup", SymbolKind.Module, descriptor.scriptSetup.loc);
+  if (descriptor.clientScript)
+    addSymbol("clientScript", SymbolKind.Module, descriptor.clientScript.loc);
+  if (descriptor.template)
+    addSymbol("template", SymbolKind.Class, descriptor.template.loc);
 
-  for (let i = 0; i < descriptor.styles.length; i++) {
-    const style = descriptor.styles[i];
-    const label = buildStyleLabel(style, i);
-    addBlock(label, SymbolKind.Property, style);
-  }
+  descriptor.styles.forEach((s, i) =>
+    addSymbol(buildStyleLabel(s, i), SymbolKind.Property, s.loc),
+  );
 
-  addBlock("docs", SymbolKind.File, descriptor.docs);
+  if (descriptor.docs)
+    addSymbol("docs", SymbolKind.File, descriptor.docs.loc);
 
-  for (const custom of descriptor.customBlocks) {
-    const range = {
-      start: doc.positionAt(custom.loc.start.offset),
-      end: doc.positionAt(custom.loc.end.offset),
-    };
-    symbols.push({
-      name: custom.tag,
-      kind: SymbolKind.Object,
-      range,
-      selectionRange: range,
-    });
-  }
+  descriptor.customBlocks.forEach((c) =>
+    addSymbol(c.tag, SymbolKind.Object, c.loc),
+  );
 
   return symbols;
 });
-
-function buildStyleLabel(style: RsfcBlock, index: number): string {
-  const parts = ["style"];
-  if (style.lang) parts.push(`lang="${style.lang}"`);
-  if (style.attrs.scoped === true) parts.push("scoped");
-  if (style.attrs.module) {
-    parts.push(
-      style.attrs.module === true ? "module" : `module="${style.attrs.module}"`,
-    );
-  }
-  if (index > 0) parts.push(`(${index + 1})`);
-  return parts.join(" ");
-}
 
 // ---------------------------------------------------------------------------
 // Hover
@@ -138,75 +216,66 @@ connection.onHover((params): Hover | null => {
   const doc = documents.get(params.textDocument.uri);
   if (!doc) return null;
 
-  const text = doc.getText();
-  const offset = doc.offsetAt(params.position);
-  const descriptor = parse(text, { filename: doc.uri });
+  const descriptor = safeParse(doc.getText(), doc.uri);
+  if (!descriptor) return null;
 
+  const offset = doc.offsetAt(params.position);
   const found = findBlockAtOffset(descriptor, offset);
   if (!found) return null;
 
   const { name, block } = found;
   const lang = block.lang ?? defaultLang(name);
   const attrsStr = formatAttrs(block.attrs);
+  const rows = [
+    `| Property | Value |`,
+    `| --- | --- |`,
+    `| Language | \`${lang}\` |`,
+    attrsStr ? `| Attributes | ${attrsStr} |` : null,
+  ].filter((l): l is string => l !== null);
 
   return {
     contents: {
       kind: MarkupKind.Markdown,
-      value: [
-        `**RSFC \`<${name}>\` block**`,
-        ``,
-        `| Property | Value |`,
-        `| --- | --- |`,
-        `| Kind | \`${block.kind}\` |`,
-        `| Language | \`${lang}\` |`,
-        attrsStr ? `| Attributes | ${attrsStr} |` : null,
-      ]
-        .filter((l): l is string => l !== null)
-        .join("\n"),
+      value: [`**RSFC \`<${name}>\` block**`, "", ...rows].join("\n"),
     },
   };
 });
 
-function findBlockAtOffset(
-  descriptor: RsfcDescriptor,
-  offset: number,
-): { name: string; block: RsfcBlock } | null {
-  const candidates: Array<{ name: string; block: RsfcBlock | null }> = [
-    { name: "script", block: descriptor.script },
-    { name: "script setup", block: descriptor.scriptSetup },
-    { name: "clientScript", block: descriptor.clientScript },
-    { name: "template", block: descriptor.template },
-    { name: "docs", block: descriptor.docs },
-    ...descriptor.styles.map((s, i) => ({
-      name: buildStyleLabel(s, i),
-      block: s as RsfcBlock,
-    })),
-    ...descriptor.customBlocks.map((c) => ({
-      name: c.tag,
-      block: { ...c, kind: "custom" as const } as unknown as RsfcBlock,
-    })),
-  ];
+// ---------------------------------------------------------------------------
+// Folding Ranges
+// ---------------------------------------------------------------------------
 
-  for (const { name, block } of candidates) {
-    if (!block) continue;
-    if (offset >= block.loc.start.offset && offset <= block.loc.end.offset) {
-      return { name, block };
+connection.onFoldingRanges((params: FoldingRangeParams): FoldingRange[] => {
+  const doc = documents.get(params.textDocument.uri);
+  if (!doc) return [];
+
+  const text = doc.getText();
+  const descriptor = safeParse(text, doc.uri);
+  if (!descriptor) return [];
+
+  const ranges: FoldingRange[] = [];
+
+  const addFolding = (block: { loc: SourceLocation } | null, tagName: string) => {
+    if (!block) return;
+    const openStart = findOpenTagOffset(text, block.loc.start.offset);
+    const closeEnd = findCloseTagEnd(text, block.loc.end.offset, tagName);
+    const startLine = doc.positionAt(openStart).line;
+    const endLine = doc.positionAt(closeEnd).line;
+    if (startLine < endLine) {
+      ranges.push({ startLine, endLine });
     }
-  }
-  return null;
-}
+  };
 
-function defaultLang(blockName: string): string {
-  if (blockName === "template") return "tsx";
-  if (blockName === "docs") return "markdown";
-  return "ts";
-}
+  addFolding(descriptor.script, "script");
+  addFolding(descriptor.scriptSetup, "script");
+  addFolding(descriptor.clientScript, "clientScript");
+  addFolding(descriptor.template, "template");
+  descriptor.styles.forEach((s) => addFolding(s, "style"));
+  addFolding(descriptor.docs, "docs");
+  descriptor.customBlocks.forEach((c) => addFolding(c, c.tag));
 
-function formatAttrs(attrs: Record<string, string | true>): string {
-  return Object.entries(attrs)
-    .map(([k, v]) => (v === true ? `\`${k}\`` : `\`${k}="${v}"\``))
-    .join(", ");
-}
+  return ranges;
+});
 
 // ---------------------------------------------------------------------------
 // Completion
@@ -234,7 +303,7 @@ const BLOCK_TAG_COMPLETIONS: CompletionItem[] = [
     documentation: {
       kind: MarkupKind.Markdown,
       value:
-        "Component setup function. `import` statements are auto-hoisted to module scope. Everything else runs inside the component function.",
+        "`import` statements are auto-hoisted to module scope. Everything else runs inside the component function.",
     },
   },
   {
@@ -245,7 +314,8 @@ const BLOCK_TAG_COMPLETIONS: CompletionItem[] = [
     insertTextFormat: InsertTextFormat.Snippet,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: "Component JSX/TSX template. Rendered as the return value of the component function.",
+      value:
+        "Component JSX/TSX template. Rendered as the return value of the component function.",
     },
   },
   {
@@ -268,7 +338,7 @@ const BLOCK_TAG_COMPLETIONS: CompletionItem[] = [
     documentation: {
       kind: MarkupKind.Markdown,
       value:
-        "Scoped CSS: selectors are auto-namespaced with a unique `data-v-*` attribute so styles only apply to this component.",
+        "Selectors are auto-namespaced with a unique `data-v-*` attribute so styles only apply to this component.",
     },
   },
   {
@@ -280,14 +350,14 @@ const BLOCK_TAG_COMPLETIONS: CompletionItem[] = [
     documentation: {
       kind: MarkupKind.Markdown,
       value:
-        "CSS Modules: class names are locally scoped and injected as `styles.<className>` in the template.",
+        "Class names are locally scoped and injected as `styles.<className>` in the template.",
     },
   },
   {
-    label: "style lang scss",
+    label: 'style lang="scss"',
     kind: CompletionItemKind.Snippet,
     detail: "SCSS style block",
-    insertText: "style lang=\"scss\">\n\t$0\n</style>",
+    insertText: 'style lang="scss">\n\t$0\n</style>',
     insertTextFormat: InsertTextFormat.Snippet,
     documentation: {
       kind: MarkupKind.Markdown,
@@ -303,7 +373,7 @@ const BLOCK_TAG_COMPLETIONS: CompletionItem[] = [
     documentation: {
       kind: MarkupKind.Markdown,
       value:
-        "Client-only code, wrapped in a `typeof document !== 'undefined'` guard. Never runs during SSR.",
+        "Wrapped in a `typeof document !== 'undefined'` guard. Never runs during SSR.",
     },
   },
   {
@@ -314,7 +384,7 @@ const BLOCK_TAG_COMPLETIONS: CompletionItem[] = [
     insertTextFormat: InsertTextFormat.Snippet,
     documentation: {
       kind: MarkupKind.Markdown,
-      value: "Markdown documentation block. Ignored by the code generator.",
+      value: "Markdown documentation. Ignored by the code generator.",
     },
   },
 ];
@@ -323,9 +393,8 @@ const SCRIPT_ATTR_COMPLETIONS: CompletionItem[] = [
   {
     label: "setup",
     kind: CompletionItemKind.Property,
-    detail: "Component setup mode",
     insertText: "setup",
-    documentation: "Makes this a setup script block.",
+    detail: "Component setup mode",
   },
   {
     label: 'lang="ts"',
@@ -380,36 +449,36 @@ const STYLE_ATTR_COMPLETIONS: CompletionItem[] = [
   },
 ];
 
-connection.onCompletion((params: TextDocumentPositionParams): CompletionItem[] => {
-  const doc = documents.get(params.textDocument.uri);
-  if (!doc) return [];
+connection.onCompletion(
+  (params: TextDocumentPositionParams): CompletionItem[] => {
+    const doc = documents.get(params.textDocument.uri);
+    if (!doc) return [];
 
-  const text = doc.getText();
-  const offset = doc.offsetAt(params.position);
+    const text = doc.getText();
+    const offset = doc.offsetAt(params.position);
+    const lineStart = text.lastIndexOf("\n", offset - 1) + 1;
+    const linePrefix = text.slice(lineStart, offset);
 
-  // Current line up to cursor
-  const lineStart = text.lastIndexOf("\n", offset - 1) + 1;
-  const linePrefix = text.slice(lineStart, offset);
+    // Inside an opening block tag — suggest attributes
+    const openTagMatch = linePrefix.match(
+      /^(<)(script|clientScript|style|template|docs)\b([^>]*)$/,
+    );
+    if (openTagMatch) {
+      const tagName = openTagMatch[2];
+      if (tagName === "script" || tagName === "clientScript")
+        return SCRIPT_ATTR_COMPLETIONS;
+      if (tagName === "style") return STYLE_ATTR_COMPLETIONS;
+      return [];
+    }
 
-  // Inside a block's opening tag — suggest attributes
-  const openTagMatch = linePrefix.match(
-    /^(<)(script|clientScript|style|template|docs)\b([^>]*)$/,
-  );
-  if (openTagMatch) {
-    const tagName = openTagMatch[2];
-    if (tagName === "script" || tagName === "clientScript")
-      return SCRIPT_ATTR_COMPLETIONS;
-    if (tagName === "style") return STYLE_ATTR_COMPLETIONS;
+    // After `<` at start of line — suggest block tag names
+    if (/^\s*<$/.test(linePrefix)) {
+      return BLOCK_TAG_COMPLETIONS;
+    }
+
     return [];
-  }
-
-  // After `<` at start of line — suggest block tag names
-  if (/^\s*<$/.test(linePrefix)) {
-    return BLOCK_TAG_COMPLETIONS;
-  }
-
-  return [];
-});
+  },
+);
 
 // ---------------------------------------------------------------------------
 // Bootstrap

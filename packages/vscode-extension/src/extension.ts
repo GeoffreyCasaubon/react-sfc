@@ -1,5 +1,5 @@
 import * as path from "path";
-import { ExtensionContext, workspace } from "vscode";
+import { ExtensionContext, workspace, window } from "vscode";
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -11,6 +11,7 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext): void {
   const serverModule = context.asAbsolutePath(path.join("dist", "server.js"));
+  const outputChannel = window.createOutputChannel("RSFC Language Server");
 
   const serverOptions: ServerOptions = {
     run: {
@@ -24,16 +25,13 @@ export function activate(context: ExtensionContext): void {
     },
   };
 
-  const traceLevel = workspace
-    .getConfiguration("rsfc")
-    .get<"off" | "messages" | "verbose">("trace.server", "off");
-
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "rsfc" }],
     synchronize: {
       fileEvents: workspace.createFileSystemWatcher("**/*.rsfc"),
     },
-    traceOutputChannel: traceLevel !== "off" ? undefined : undefined,
+    outputChannel,
+    traceOutputChannel: outputChannel,
   };
 
   client = new LanguageClient(
@@ -45,6 +43,7 @@ export function activate(context: ExtensionContext): void {
 
   client.start();
 
+  context.subscriptions.push(outputChannel);
   context.subscriptions.push({ dispose: () => client.stop() });
 }
 

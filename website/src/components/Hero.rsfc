@@ -53,6 +53,7 @@ const tabs = {
           <a href="#features" className={styles.navLinkActive}>Features</a>
           <a href="#syntax" className={styles.navLink}>Examples</a>
           <a href="#get-started" className={styles.navLink}>Get Started</a>
+          <a href="#editor" className={styles.navLink}>VS Code</a>
         </div>
       </div>
       <div className={styles.navRight}>
