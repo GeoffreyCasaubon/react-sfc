@@ -1,0 +1,54 @@
+name: Publish VS Code Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to VS Code Marketplace (requires VSCE_PAT secret)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-package:
+    name: Build & Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build core
+        run: pnpm build:core
+
+      - name: Build extension
+        run: pnpm build:extension
+
+      - name: Package VSIX
+        run: pnpm --filter rsfc run package
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rsfc-vscode-extension-${{ github.sha }}
+          path: packages/vscode-extension/*.vsix
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish to VS Code Marketplace
+        if: inputs.publish
+        run: pnpm --filter rsfc run publish:marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

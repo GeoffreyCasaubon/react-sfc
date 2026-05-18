@@ -80,6 +80,13 @@
         "enableForWorkspaceTypeScriptVersions": true
       }
     ],
+    "commands": [
+      {
+        "command": "rsfc.restartServer",
+        "title": "Restart Language Server",
+        "category": "RSFC"
+      }
+    ],
     "configuration": {
       "title": "RSFC",
       "properties": {

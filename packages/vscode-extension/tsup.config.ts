@@ -7,7 +7,9 @@ export default defineConfig([
     format: ["cjs"],
     platform: "node",
     target: "node18",
+    // vscode is provided by the VS Code runtime; bundle every vscode-* LSP library
     external: ["vscode"],
+    noExternal: [/^vscode-/],
     sourcemap: true,
     clean: true,
     outDir: "dist",
@@ -18,7 +20,7 @@ export default defineConfig([
     format: ["cjs"],
     platform: "node",
     target: "node18",
-    noExternal: ["@g-casau/rsfc-core"],
+    noExternal: [/^vscode-/, /^@g-casau\//],
     sourcemap: true,
     outDir: "dist",
   },

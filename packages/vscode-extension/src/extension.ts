@@ -1,5 +1,5 @@
 import * as path from "path";
-import { ExtensionContext, workspace, window } from "vscode";
+import { ExtensionContext, commands, window, workspace } from "vscode";
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -45,6 +45,14 @@ export function activate(context: ExtensionContext): void {
 
   context.subscriptions.push(outputChannel);
   context.subscriptions.push({ dispose: () => client.stop() });
+
+  context.subscriptions.push(
+    commands.registerCommand("rsfc.restartServer", async () => {
+      await client.stop();
+      await client.start();
+      window.showInformationMessage("RSFC: Language Server restarted.");
+    }),
+  );
 }
 
 export function deactivate(): Thenable<void> | undefined {

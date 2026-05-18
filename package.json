@@ -8,10 +8,11 @@
   },
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "build": "pnpm --filter @g-casau/rsfc-core run build && pnpm --filter @g-casau/rsfc-vite-plugin --filter @g-casau/rsfc-webpack-loader --filter @g-casau/rsfc-cli --filter @g-casau/rsfc-typescript-plugin run build",
+    "build": "pnpm --filter @g-casau/rsfc-core run build && pnpm --filter @g-casau/rsfc-vite-plugin --filter @g-casau/rsfc-webpack-loader --filter @g-casau/rsfc-cli --filter @g-casau/rsfc-typescript-plugin --filter rsfc run build",
     "build:core": "pnpm --filter @g-casau/rsfc-core run build",
     "build:vite-plugin": "pnpm --filter @g-casau/rsfc-vite-plugin run build",
     "build:webpack-loader": "pnpm --filter @g-casau/rsfc-webpack-loader run build",
+    "build:extension": "pnpm --filter rsfc run build",
     "dev:playground-vite": "pnpm --filter playground-vite run dev",
     "dev:playground-next": "pnpm --filter playground-next run dev",
     "test": "vitest run --workspace vitest.workspace.ts --passWithNoTests",
