@@ -1,0 +1,131 @@
+{
+  "RSFC Component": {
+    "prefix": "rsfc",
+    "description": "Full React Single File Component with script setup and template",
+    "body": [
+      "<script setup>",
+      "import React from 'react';",
+      "$0",
+      "</script>",
+      "",
+      "<template>",
+      "  <div>",
+      "    $1",
+      "  </div>",
+      "</template>",
+      "",
+      "<style>",
+      "",
+      "</style>"
+    ]
+  },
+  "RSFC Component with Props": {
+    "prefix": "rsfc-props",
+    "description": "RSFC component with typed props",
+    "body": [
+      "<script setup>",
+      "import React from 'react';",
+      "",
+      "interface Props {",
+      "  ${1:propName}: ${2:string};",
+      "}",
+      "",
+      "const { ${1:propName} } = props as Props;",
+      "$0",
+      "</script>",
+      "",
+      "<template>",
+      "  <div>",
+      "    {${1:propName}}",
+      "  </div>",
+      "</template>",
+      "",
+      "<style scoped>",
+      "",
+      "</style>"
+    ]
+  },
+  "script block": {
+    "prefix": "script",
+    "description": "Module-level script block",
+    "body": [
+      "<script>",
+      "$0",
+      "</script>"
+    ]
+  },
+  "script setup block": {
+    "prefix": "script-setup",
+    "description": "Component setup script block",
+    "body": [
+      "<script setup>",
+      "$0",
+      "</script>"
+    ]
+  },
+  "template block": {
+    "prefix": "template",
+    "description": "JSX template block",
+    "body": [
+      "<template>",
+      "  $0",
+      "</template>"
+    ]
+  },
+  "style block": {
+    "prefix": "style",
+    "description": "CSS style block",
+    "body": [
+      "<style>",
+      "$0",
+      "</style>"
+    ]
+  },
+  "style scoped block": {
+    "prefix": "style-scoped",
+    "description": "Scoped CSS style block",
+    "body": [
+      "<style scoped>",
+      "$0",
+      "</style>"
+    ]
+  },
+  "style module block": {
+    "prefix": "style-module",
+    "description": "CSS Modules style block",
+    "body": [
+      "<style module>",
+      "$0",
+      "</style>"
+    ]
+  },
+  "style scss block": {
+    "prefix": "style-scss",
+    "description": "SCSS style block",
+    "body": [
+      "<style lang=\"scss\">",
+      "$0",
+      "</style>"
+    ]
+  },
+  "clientScript block": {
+    "prefix": "clientScript",
+    "description": "Client-only script block (browser only)",
+    "body": [
+      "<clientScript>",
+      "$0",
+      "</clientScript>"
+    ]
+  },
+  "docs block": {
+    "prefix": "docs",
+    "description": "Markdown documentation block",
+    "body": [
+      "<docs>",
+      "# ${1:ComponentName}",
+      "",
+      "$0",
+      "</docs>"
+    ]
+  }
+}

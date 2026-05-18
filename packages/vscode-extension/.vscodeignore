@@ -1,0 +1,14 @@
+**/.git/**
+**/.gitignore
+**/node_modules/**
+src/**
+**/*.ts
+!**/*.d.ts
+tsup.config.ts
+tsconfig.json
+.eslintrc*
+**/*.map
+**/tsconfig*.json
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
