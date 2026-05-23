@@ -1,7 +1,7 @@
 import type { CodeMapping, LanguagePlugin, VirtualCode } from '@volar/language-core';
 import type * as ts from 'typescript';
 import { URI } from 'vscode-uri';
-import { parse } from '@g-casau/rsfc-core';
+import { parse, type StyleBlock } from '@g-casau/rsfc-core';
 
 // Wrapper injected around the <template> block to make it valid TSX.
 // These must be kept in sync with TEMPLATE_SUFFIX below.
@@ -72,6 +72,14 @@ function buildVirtualCode(snapshot: ts.IScriptSnapshot): VirtualCode {
       lengths: [descriptor.clientScript.content.length],
       data: ALL_FEATURES,
     });
+  }
+
+  // Inject CSS module bindings for <style module> blocks (synthetic — no source mapping)
+  for (const style of descriptor.styles) {
+    const mod = (style as StyleBlock).attrs['module'];
+    if (mod === undefined) continue;
+    const varName = mod === true ? 'styles' : String(mod);
+    generated += `declare const ${varName}: Record<string, string>;\n`;
   }
 
   // <template> — JSX, wrapped so it's valid TSX syntax
