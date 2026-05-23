@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import * as path from "path";
 import { ExtensionContext, commands, window, workspace } from "vscode";
 import {
@@ -9,9 +10,43 @@ import {
 
 let client: LanguageClient;
 
+function resolveTsdk(): string {
+  // Check VS Code typescript.tsdk workspace/user setting
+  const configured = workspace.getConfiguration("typescript").get<string>("tsdk");
+  if (configured) {
+    if (path.isAbsolute(configured)) return configured;
+    for (const folder of workspace.workspaceFolders ?? []) {
+      const resolved = path.join(folder.uri.fsPath, configured);
+      if (fs.existsSync(path.join(resolved, "typescript.js"))) return resolved;
+    }
+    return configured;
+  }
+
+  // Walk up from each workspace folder to find TypeScript (handles monorepos)
+  for (const folder of workspace.workspaceFolders ?? []) {
+    let current = folder.uri.fsPath;
+    for (let i = 0; i < 6; i++) {
+      const candidate = path.join(current, "node_modules", "typescript", "lib");
+      if (fs.existsSync(path.join(candidate, "typescript.js"))) return candidate;
+      const parent = path.dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+  }
+
+  return "";
+}
+
 export function activate(context: ExtensionContext): void {
   const serverModule = context.asAbsolutePath(path.join("dist", "server.js"));
   const outputChannel = window.createOutputChannel("RSFC Language Server");
+
+  // Prefer workspace TypeScript, fall back to typescript.js bundled in dist/tslib
+  const bundledTsdk = path.join(context.extensionPath, "dist", "tslib");
+  const tsdk = resolveTsdk() || (fs.existsSync(path.join(bundledTsdk, "typescript.js")) ? bundledTsdk : "");
+
+  outputChannel.appendLine(`[RSFC] tsdk resolved: "${tsdk}" (bundled fallback: "${bundledTsdk}")`);
+  outputChannel.appendLine(`[RSFC] workspaceFolders: ${JSON.stringify(workspace.workspaceFolders?.map(f => f.uri.fsPath) ?? [])}`);
 
   const serverOptions: ServerOptions = {
     run: {
@@ -31,7 +66,7 @@ export function activate(context: ExtensionContext): void {
       fileEvents: workspace.createFileSystemWatcher("**/*.rsfc"),
     },
     outputChannel,
-    traceOutputChannel: outputChannel,
+    initializationOptions: { typescript: { tsdk } },
   };
 
   client = new LanguageClient(

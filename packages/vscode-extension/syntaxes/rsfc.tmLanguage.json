@@ -19,16 +19,16 @@
       "name": "meta.block.template.rsfc",
       "begin": "(<)(template)((?:\\s+[^>]*)?)(>)",
       "beginCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.template.rsfc" },
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
         "3": { "patterns": [{ "include": "#tag-attributes" }] },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "end": "(</)(template)(\\s*)(>)",
       "endCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.template.rsfc" },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "contentName": "meta.embedded.block.typescriptreact",
       "patterns": [{ "include": "source.tsx" }]
@@ -38,16 +38,16 @@
       "name": "meta.block.script.rsfc",
       "begin": "(<)(script)(\\s[^>]*?\\blang=\"tsx\"[^>]*?)(>)",
       "beginCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.script.rsfc" },
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
         "3": { "patterns": [{ "include": "#tag-attributes" }] },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "end": "(</)(script)(\\s*)(>)",
       "endCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.script.rsfc" },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "contentName": "meta.embedded.block.typescriptreact",
       "patterns": [{ "include": "source.tsx" }]
@@ -57,16 +57,16 @@
       "name": "meta.block.script.rsfc",
       "begin": "(<)(script)((?:\\s+[^>]*)?)(>)",
       "beginCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.script.rsfc" },
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
         "3": { "patterns": [{ "include": "#tag-attributes" }] },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "end": "(</)(script)(\\s*)(>)",
       "endCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.script.rsfc" },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "contentName": "meta.embedded.block.typescript",
       "patterns": [{ "include": "source.ts" }]
@@ -76,16 +76,16 @@
       "name": "meta.block.clientScript.rsfc",
       "begin": "(<)(clientScript)((?:\\s+[^>]*)?)(>)",
       "beginCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.clientScript.rsfc" },
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
         "3": { "patterns": [{ "include": "#tag-attributes" }] },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "end": "(</)(clientScript)(\\s*)(>)",
       "endCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.clientScript.rsfc" },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "contentName": "meta.embedded.block.typescript",
       "patterns": [{ "include": "source.ts" }]
@@ -95,16 +95,16 @@
       "name": "meta.block.style.rsfc",
       "begin": "(<)(style)(\\s[^>]*?\\blang=\"scss\"[^>]*?)(>)",
       "beginCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.style.rsfc" },
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
         "3": { "patterns": [{ "include": "#tag-attributes" }] },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "end": "(</)(style)(\\s*)(>)",
       "endCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.style.rsfc" },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "contentName": "meta.embedded.block.scss",
       "patterns": [{ "include": "source.css.scss" }]
@@ -114,16 +114,16 @@
       "name": "meta.block.style.rsfc",
       "begin": "(<)(style)(\\s[^>]*?\\blang=\"less\"[^>]*?)(>)",
       "beginCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.style.rsfc" },
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
         "3": { "patterns": [{ "include": "#tag-attributes" }] },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "end": "(</)(style)(\\s*)(>)",
       "endCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.style.rsfc" },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "contentName": "meta.embedded.block.less",
       "patterns": [{ "include": "source.css.less" }]
@@ -133,16 +133,16 @@
       "name": "meta.block.style.rsfc",
       "begin": "(<)(style)(\\s[^>]*?\\blang=\"styl(?:us)?\"[^>]*?)(>)",
       "beginCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.style.rsfc" },
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
         "3": { "patterns": [{ "include": "#tag-attributes" }] },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "end": "(</)(style)(\\s*)(>)",
       "endCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.style.rsfc" },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "contentName": "meta.embedded.block.css",
       "patterns": [{ "include": "source.css" }]
@@ -152,16 +152,16 @@
       "name": "meta.block.style.rsfc",
       "begin": "(<)(style)((?:\\s+[^>]*)?)(>)",
       "beginCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.style.rsfc" },
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
         "3": { "patterns": [{ "include": "#tag-attributes" }] },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "end": "(</)(style)(\\s*)(>)",
       "endCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.style.rsfc" },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "contentName": "meta.embedded.block.css",
       "patterns": [{ "include": "source.css" }]
@@ -171,16 +171,16 @@
       "name": "meta.block.docs.rsfc",
       "begin": "(<)(docs)((?:\\s+[^>]*)?)(>)",
       "beginCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.docs.rsfc" },
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
         "3": { "patterns": [{ "include": "#tag-attributes" }] },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "end": "(</)(docs)(\\s*)(>)",
       "endCaptures": {
-        "1": { "name": "punctuation.definition.tag.begin.rsfc" },
-        "2": { "name": "entity.name.tag.block.docs.rsfc" },
-        "4": { "name": "punctuation.definition.tag.end.rsfc" }
+        "1": { "name": "punctuation.definition.tag.begin.html.rsfc" },
+        "2": { "name": "entity.name.tag.$2.html.rsfc" },
+        "4": { "name": "punctuation.definition.tag.end.html.rsfc" }
       },
       "contentName": "meta.embedded.block.markdown",
       "patterns": [{ "include": "text.html.markdown" }]
@@ -191,27 +191,27 @@
         {
           "match": "(\\blang\\b)\\s*=\\s*(\"[^\"]*\")",
           "captures": {
-            "1": { "name": "entity.other.attribute-name.rsfc" },
-            "2": { "name": "string.quoted.double.rsfc" }
+            "1": { "name": "entity.other.attribute-name.html.rsfc" },
+            "2": { "name": "string.quoted.double.html.rsfc" }
           }
         },
         {
           "match": "(\\b(?:setup|scoped|module)\\b)\\s*(?:=\\s*(\"[^\"]*\"))?",
           "captures": {
-            "1": { "name": "entity.other.attribute-name.rsfc keyword.other.rsfc" },
-            "2": { "name": "string.quoted.double.rsfc" }
+            "1": { "name": "entity.other.attribute-name.html.rsfc keyword.other.rsfc" },
+            "2": { "name": "string.quoted.double.html.rsfc" }
           }
         },
         {
           "match": "(\\w[-\\w]*)\\s*=\\s*(\"[^\"]*\")",
           "captures": {
-            "1": { "name": "entity.other.attribute-name.rsfc" },
-            "2": { "name": "string.quoted.double.rsfc" }
+            "1": { "name": "entity.other.attribute-name.html.rsfc" },
+            "2": { "name": "string.quoted.double.html.rsfc" }
           }
         },
         {
           "match": "\\b\\w[-\\w]*\\b",
-          "name": "entity.other.attribute-name.rsfc"
+          "name": "entity.other.attribute-name.html.rsfc"
         }
       ]
     }

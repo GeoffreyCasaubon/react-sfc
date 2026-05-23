@@ -5,6 +5,10 @@ const [count, setCount] = useState(0)
 const increment = () => setCount((c) => c + 1)
 const decrement = () => setCount((c) => c - 1)
 const reset = () => setCount(0)
+
+function test(value:number): string{
+  return value
+}
 </script>
 
 <template>
@@ -13,7 +17,7 @@ const reset = () => setCount(0)
   <div className={styles.controls}>
     <button className={styles.btn} onClick={decrement} aria-label="Decrement">−</button>
     <button className={`${styles.btn} ${styles.reset}`} onClick={reset}>Reset</button>
-    <button className={styles.btn} onClick={increment} aria-label="Increment">+</button>
+    <button className={styles.btn} onClick={test} aria-label="Increment">+</button>
   </div>
 </div>
 </template>

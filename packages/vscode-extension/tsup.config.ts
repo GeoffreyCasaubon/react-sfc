@@ -9,7 +9,7 @@ export default defineConfig([
     target: "node18",
     // vscode is provided by the VS Code runtime; bundle every vscode-* LSP library
     external: ["vscode"],
-    noExternal: [/^vscode-/],
+    noExternal: [/^vscode-/, /^@g-casau\//, "typescript"],
     sourcemap: true,
     clean: true,
     outDir: "dist",
@@ -20,7 +20,7 @@ export default defineConfig([
     format: ["cjs"],
     platform: "node",
     target: "node18",
-    noExternal: [/^vscode-/, /^@g-casau\//],
+    noExternal: [/^vscode-/, /^@g-casau\//, /^@volar\//, /^vscode-uri$/, 'volar-service-typescript'],
     sourcemap: true,
     outDir: "dist",
   },

@@ -43,6 +43,15 @@ const features = [
     desc: 'Hover over any block to see its kind, language, and declared attributes in a Markdown tooltip.',
   },
 ]
+function test(chiffre:number):void {
+  setTimeout(() => {
+    console.log('toto')
+  }, chiffre);
+}
+
+function test(toto:string):string {
+  return toto
+}
 </script>
 
 <template>
