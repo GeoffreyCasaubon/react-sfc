@@ -1,0 +1,135 @@
+{
+  "name": "rsfc",
+  "displayName": "RSFC - React Single File Components",
+  "description": "Syntax highlighting, IntelliSense, diagnostics, and snippets for .rsfc files",
+  "version": "0.1.0",
+  "private": true,
+  "publisher": "g-casau",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Formatters"
+  ],
+  "keywords": [
+    "react",
+    "rsfc",
+    "sfc",
+    "single file component",
+    "typescript",
+    "jsx",
+    "tsx"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/geoffreycasaubon/react-sfc"
+  },
+  "bugs": {
+    "url": "https://github.com/geoffreycasaubon/react-sfc/issues"
+  },
+  "icon": "images/logo.svg",
+  "homepage": "https://github.com/geoffreycasaubon/react-sfc#readme",
+  "activationEvents": [
+    "onLanguage:rsfc"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "rsfc",
+        "aliases": [
+          "RSFC",
+          "React SFC"
+        ],
+        "extensions": [
+          ".rsfc"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "assets/file-icon.svg",
+          "dark": "assets/file-icon.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "rsfc",
+        "scopeName": "source.rsfc",
+        "path": "./syntaxes/rsfc.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.typescript": "typescript",
+          "meta.embedded.block.typescriptreact": "typescriptreact",
+          "meta.embedded.block.css": "css",
+          "meta.embedded.block.scss": "scss",
+          "meta.embedded.block.less": "less",
+          "meta.embedded.block.markdown": "markdown"
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "rsfc",
+        "path": "./snippets/rsfc.json"
+      }
+    ],
+    "typescriptServerPlugins": [
+      {
+        "name": "@g-casau/rsfc-typescript-plugin",
+        "enableForWorkspaceTypeScriptVersions": true
+      }
+    ],
+    "commands": [
+      {
+        "command": "rsfc.restartServer",
+        "title": "Restart Language Server",
+        "category": "RSFC"
+      }
+    ],
+    "configuration": {
+      "title": "RSFC",
+      "properties": {
+        "rsfc.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the RSFC language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup && node -e \"const{mkdirSync,copyFileSync}=require('fs');mkdirSync('dist/tslib',{recursive:true});copyFileSync('node_modules/typescript/lib/typescript.js','dist/tslib/typescript.js');\"",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "package": "vsce package --no-dependencies",
+    "publish:marketplace": "vsce publish --no-dependencies",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@g-casau/rsfc-core": "workspace:*",
+    "@volar/language-core": "2.4.28",
+    "@volar/language-server": "2.4.28",
+    "@volar/language-service": "2.4.28",
+    "@volar/typescript": "2.4.28",
+    "typescript": "^5.7.0",
+    "volar-service-typescript": "^0.0.68",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.11",
+    "vscode-uri": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "tsup": "^8.3.0",
+    "vitest": "^3.0.0",
+    "vscode-languageserver-protocol": "^3.17.5"
+  }
+}

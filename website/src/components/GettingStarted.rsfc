@@ -26,7 +26,7 @@ const steps = [
   },
 ]
 
-const techStack = ['REACT', 'VITE', 'TYPESCRIPT', 'CSS MODULES', 'NEXT.JS', 'REMIX']
+const techStack = ['REACT', 'VITE', 'TYPESCRIPT', 'CSS MODULES', 'NEXT.JS', 'REMIX', 'VS CODE']
 </script>
 
 <template>

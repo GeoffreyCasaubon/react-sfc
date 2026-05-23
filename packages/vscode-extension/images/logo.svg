@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <title>RSFC</title>
+  <g transform="translate(256, 256)">
+    <ellipse rx="155" ry="62" transform="rotate(0)" fill="none" stroke="#3EC99E" stroke-width="14" stroke-linecap="round"/>
+    <ellipse rx="155" ry="62" transform="rotate(60)" fill="none" stroke="#3EC99E" stroke-width="14" stroke-linecap="round"/>
+    <ellipse rx="155" ry="62" transform="rotate(-60)" fill="none" stroke="#3EC99E" stroke-width="14" stroke-linecap="round"/>
+    <circle r="72" fill="#3EC99E"/>
+    <text text-anchor="middle" dominant-baseline="central" fill="white" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="26" font-weight="700">RSFC</text>
+  </g>
+</svg>

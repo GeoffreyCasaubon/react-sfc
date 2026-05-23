@@ -1,7 +1,7 @@
 # RSFC Plugin — Claude Code Instructions
 
 ## Architecture
-Monorepo pnpm avec packages/ : core, vite-plugin, webpack-loader, playground-next, playground-vite
+Monorepo pnpm avec packages/ : core, vite-plugin, webpack-loader, typescript-plugin, cli, vscode-extension, playground-next, playground-vite
 
 ## Règles absolues
 - core/ = zéro dépendance runtime externe
@@ -24,9 +24,12 @@ Monorepo pnpm avec packages/ : core, vite-plugin, webpack-loader, playground-nex
 
 | Package | Rôle |
 |---|---|
-| `@rsfc/core` | Parser + générateur, zéro dep runtime |
-| `@rsfc/vite-plugin` | Plugin Vite consommant core |
-| `@rsfc/webpack-loader` | Loader Webpack consommant core |
+| `@g-casau/rsfc-core` | Parser + générateur, zéro dep runtime |
+| `@g-casau/rsfc-vite-plugin` | Plugin Vite consommant core |
+| `@g-casau/rsfc-webpack-loader` | Loader Webpack consommant core |
+| `@g-casau/rsfc-typescript-plugin` | Plugin tsserver pour l'inférence de types |
+| `@g-casau/rsfc-cli` | CLI de compilation |
+| `rsfc` (vscode-extension) | Extension VS Code : grammar, LSP, snippets |
 | `playground-vite` | Playground Vite + React 19 |
 | `playground-next` | Playground Next.js 15 + React 19 |
 
@@ -38,4 +41,4 @@ Monorepo pnpm avec packages/ : core, vite-plugin, webpack-loader, playground-nex
 5. Playgrounds pour intégration manuelle
 
 ## Agents spécialisés
-Voir `.claude/agents/` pour les agents dédiés au parser, generator, vite et webpack.
+Voir `.claude/agents/` pour les agents dédiés au parser, generator, vite, webpack et vscode.
