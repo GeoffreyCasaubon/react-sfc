@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { useState } from 'react'
+import { highlightLine } from '../lib/highlight'
 
 const [activeTab, setActiveTab] = useState<'rsfc' | 'config'>('rsfc')
 
 const S = '</'
+
+const langMap = { rsfc: 'tsx', config: 'typescript' } as const
 
 const tabs = {
   rsfc: {
@@ -48,7 +51,17 @@ const tabs = {
   <nav className={styles.nav}>
     <div className={styles.navInner}>
       <div className={styles.navLeft}>
-        <a href="/" className={styles.logo}>RSFC</a>
+        <a href="/" className={styles.logo} aria-label="RSFC">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="36" height="36" aria-hidden="true">
+            <g transform="translate(256,256)">
+              <ellipse rx="155" ry="62" transform="rotate(0)" fill="none" stroke="#3EC99E" strokeWidth="14" strokeLinecap="round"/>
+              <ellipse rx="155" ry="62" transform="rotate(60)" fill="none" stroke="#3EC99E" strokeWidth="14" strokeLinecap="round"/>
+              <ellipse rx="155" ry="62" transform="rotate(-60)" fill="none" stroke="#3EC99E" strokeWidth="14" strokeLinecap="round"/>
+              <circle r="72" fill="#3EC99E"/>
+            </g>
+          </svg>
+          <span className={styles.logoText}>RSFC</span>
+        </a>
         <div className={styles.navLinks}>
           <a href="#features" className={styles.navLinkActive}>Features</a>
           <a href="#syntax" className={styles.navLink}>Examples</a>
@@ -77,7 +90,7 @@ const tabs = {
     <div className={styles.heroLeft}>
       <div className={styles.badge}>
         <span className={styles.badgeDot} />
-        <span className={styles.badgeLabel}>v1.0.0 — Now Available</span>
+        <span className={styles.badgeLabel}>v1.1.0 — Now Available</span>
       </div>
       <h1 className={styles.title}>
         Vue-style SFCs,<br />
@@ -127,7 +140,9 @@ const tabs = {
         {tabs[activeTab].lines.map((line, i) => (
           <div key={i} className={styles.codeLine}>
             <span className={styles.lineNum}>{i + 1}</span>
-            <span className={styles.lineText}>{line || ' '}</span>
+            <span className={styles.lineText}
+              dangerouslySetInnerHTML={{ __html: highlightLine(line, langMap[activeTab]) }}
+            />
           </div>
         ))}
       </div>
@@ -172,11 +187,19 @@ const tabs = {
 }
 
 .logo {
-  font-size: 1.2rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.15s;
+}
+.logo:hover { opacity: 0.85; }
+
+.logoText {
   font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #fff;
 }
 
 .navLinks {
@@ -447,6 +470,7 @@ const tabs = {
 
 .lineText {
   color: var(--text-muted);
+  white-space: pre;
 }
 
 @media (max-width: 900px) {

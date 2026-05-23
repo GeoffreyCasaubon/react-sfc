@@ -43,15 +43,6 @@ const features = [
     desc: 'Hover over any block to see its kind, language, and declared attributes in a Markdown tooltip.',
   },
 ]
-function test(chiffre:number):void {
-  setTimeout(() => {
-    console.log('toto')
-  }, chiffre);
-}
-
-function test(toto:string):string {
-  return toto
-}
 </script>
 
 <template>
@@ -61,17 +52,18 @@ function test(toto:string):string {
       <span className={styles.eyebrow}>VS CODE EXTENSION</span>
       <h2 className={styles.heading}>First-class editor support.</h2>
       <p className={styles.sub}>
-        Install <code className={styles.extId}>g-casau.rsfc</code> for a full-featured RSFC development experience —
+        Download the <code className={styles.extId}>.vsix</code> and install it in VS Code via
+        <em> Extensions → Install from VSIX</em> for a full-featured RSFC development experience —
         syntax highlighting, IntelliSense, live diagnostics, and more.
       </p>
       <a
-        href="https://marketplace.visualstudio.com/items?itemName=g-casau.rsfc"
+        href="https://github.com/GeoffreyCasaubon/react-sfc/releases/tag/v0.2.0-vscode"
         target="_blank"
         rel="noreferrer"
         className={styles.btn}
       >
         <span className="material-symbols-outlined" style={{ fontSize: '18px', lineHeight: 1 }}>download</span>
-        Install from Marketplace
+        Download .vsix
       </a>
     </div>
 

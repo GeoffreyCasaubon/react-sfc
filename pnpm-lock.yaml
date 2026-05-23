@@ -99,7 +99,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       babel-loader:
         specifier: ^9.2.0
-        version: 9.2.1(@babel/core@7.29.0)(webpack@5.106.2)
+        version: 9.2.1(@babel/core@7.29.0)(webpack@5.106.2(esbuild@0.27.7))
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -236,13 +236,16 @@ importers:
         version: 22.19.17
       '@types/webpack':
         specifier: ^5.28.5
-        version: 5.28.5
+        version: 5.28.5(esbuild@0.27.7)
       webpack:
         specifier: ^5.96.0
-        version: 5.106.2
+        version: 5.106.2(esbuild@0.27.7)
 
   website:
     dependencies:
+      prismjs:
+        specifier: ^1.30.0
+        version: 1.30.0
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -259,6 +262,9 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.19.39
+      '@types/prismjs':
+        specifier: ^1.26.6
+        version: 1.26.6
       '@types/react':
         specifier: ^19
         version: 19.2.14
@@ -1640,6 +1646,9 @@ packages:
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
+
+  '@types/prismjs@1.26.6':
+    resolution: {integrity: sha512-vqlvI7qlMvcCBbVe0AKAb4f97//Hy0EBTaiW8AalRnG/xAN5zOiWWyrNqNXeq8+KAuvRewjCVY1+IPxk4RdNYw==}
 
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
@@ -3170,6 +3179,10 @@ packages:
     resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
     engines: {node: '>=10.13.0'}
     hasBin: true
+
+  prismjs@1.30.0:
+    resolution: {integrity: sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw==}
+    engines: {node: '>=6'}
 
   prr@1.0.1:
     resolution: {integrity: sha512-yPw4Sng1gWghHQWj0B3ZggWUm4qVbPwPFcRG8KyxiU7J2OHFSoEHKS+EZ3fv5l1t9CyCiop6l/ZYeWbrgoQejw==}
@@ -5211,6 +5224,8 @@ snapshots:
 
   '@types/normalize-package-data@2.4.4': {}
 
+  '@types/prismjs@1.26.6': {}
+
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:
       '@types/react': 19.2.14
@@ -5223,11 +5238,11 @@ snapshots:
 
   '@types/vscode@1.120.0': {}
 
-  '@types/webpack@5.28.5':
+  '@types/webpack@5.28.5(esbuild@0.27.7)':
     dependencies:
       '@types/node': 20.19.39
       tapable: 2.3.3
-      webpack: 5.106.2
+      webpack: 5.106.2(esbuild@0.27.7)
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild
@@ -5606,12 +5621,12 @@ snapshots:
       tunnel: 0.0.6
       typed-rest-client: 1.8.11
 
-  babel-loader@9.2.1(@babel/core@7.29.0)(webpack@5.106.2):
+  babel-loader@9.2.1(@babel/core@7.29.0)(webpack@5.106.2(esbuild@0.27.7)):
     dependencies:
       '@babel/core': 7.29.0
       find-cache-dir: 4.0.0
       schema-utils: 4.3.3
-      webpack: 5.106.2
+      webpack: 5.106.2(esbuild@0.27.7)
 
   balanced-match@1.0.2: {}
 
@@ -6825,6 +6840,8 @@ snapshots:
 
   prettier@2.8.8: {}
 
+  prismjs@1.30.0: {}
+
   prr@1.0.1:
     optional: true
 
@@ -7254,13 +7271,15 @@ snapshots:
       ansi-escapes: 7.3.0
       supports-hyperlinks: 3.2.0
 
-  terser-webpack-plugin@5.5.0(webpack@5.106.2):
+  terser-webpack-plugin@5.5.0(esbuild@0.27.7)(webpack@5.106.2(esbuild@0.27.7)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.46.2
-      webpack: 5.106.2
+      webpack: 5.106.2(esbuild@0.27.7)
+    optionalDependencies:
+      esbuild: 0.27.7
 
   terser@5.46.2:
     dependencies:
@@ -7619,7 +7638,7 @@ snapshots:
 
   webpack-sources@3.4.0: {}
 
-  webpack@5.106.2:
+  webpack@5.106.2(esbuild@0.27.7):
     dependencies:
       '@types/eslint-scope': 3.7.7
       '@types/estree': 1.0.8
@@ -7642,7 +7661,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
-      terser-webpack-plugin: 5.5.0(webpack@5.106.2)
+      terser-webpack-plugin: 5.5.0(esbuild@0.27.7)(webpack@5.106.2(esbuild@0.27.7))
       watchpack: 2.5.1
       webpack-sources: 3.4.0
     transitivePeerDependencies:

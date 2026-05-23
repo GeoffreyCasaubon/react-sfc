@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useState } from 'react'
+import { highlightLine, type HighlightLang } from '../lib/highlight'
 
 const [copied, setCopied] = useState<number | null>(null)
 
@@ -13,6 +14,7 @@ const steps = [
   {
     n: '01',
     color: 'primary' as const,
+    lang: 'bash' as HighlightLang,
     title: 'Install the core engine',
     desc: 'Bootstrap your environment with the Vite plugin and React adapter.',
     code: 'npm install -D @g-casau/rsfc-vite-plugin @vitejs/plugin-react',
@@ -20,13 +22,17 @@ const steps = [
   {
     n: '02',
     color: 'secondary' as const,
+    lang: 'typescript' as HighlightLang,
     title: 'Register the plugin',
     desc: 'Enable .rsfc support in your Vite configuration file.',
     code: `import rsfc from '@g-casau/rsfc-vite-plugin'\n// plugins: [rsfc(), react()]`,
   },
 ]
 
-const techStack = ['REACT', 'VITE', 'TYPESCRIPT', 'CSS MODULES', 'NEXT.JS', 'REMIX', 'VS CODE']
+function highlightCode(code: string, lang: HighlightLang): string {
+  return code.split('\n').map(line => highlightLine(line, lang)).join('\n')
+}
+
 </script>
 
 <template>
@@ -48,9 +54,10 @@ const techStack = ['REACT', 'VITE', 'TYPESCRIPT', 'CSS MODULES', 'NEXT.JS', 'REM
                 </div>
               </div>
               <div className={styles.codeRow}>
-                <code className={s.color === 'secondary' ? styles.codeSecondary : styles.codePrimary}>
-                  {s.code}
-                </code>
+                <code
+                  className={s.color === 'secondary' ? styles.codeSecondary : styles.codePrimary}
+                  dangerouslySetInnerHTML={{ __html: highlightCode(s.code, s.lang) }}
+                />
                 <button
                   className={styles.copyBtn}
                   onClick={() => copy(i, s.code)}
@@ -72,11 +79,21 @@ const techStack = ['REACT', 'VITE', 'TYPESCRIPT', 'CSS MODULES', 'NEXT.JS', 'REM
         <div className={styles.card}>
           <span className={styles.cardLabel}>TYPE DECLARATIONS</span>
           <div className={styles.cardCode}>
-            <div className={styles.codeLine}><span className={styles.lineNum}>1</span><span className={styles.lineText}>declare module "*.rsfc" {'{'}</span></div>
-            <div className={styles.codeLine}><span className={styles.lineNum}>2</span><span className={styles.lineText}>  import type {'{ FC }'} from "react"</span></div>
-            <div className={styles.codeLine}><span className={styles.lineNum}>3</span><span className={styles.lineText}>  const Component: FC</span></div>
-            <div className={styles.codeLine}><span className={styles.lineNum}>4</span><span className={styles.lineText}>  export default Component</span></div>
-            <div className={styles.codeLine}><span className={styles.lineNum}>5</span><span className={styles.lineText}>{'}'}</span></div>
+            {[
+              `declare module "*.rsfc" {`,
+              `  import type { FC } from "react"`,
+              `  const Component: FC`,
+              `  export default Component`,
+              `}`,
+            ].map((line, i) => (
+              <div key={i} className={styles.codeLine}>
+                <span className={styles.lineNum}>{i + 1}</span>
+                <span
+                  className={styles.lineText}
+                  dangerouslySetInnerHTML={{ __html: highlightLine(line, 'typescript') }}
+                />
+              </div>
+            ))}
           </div>
           <p className={styles.cardNote}>
             Add <code className={styles.codeInline}>rsfc.d.ts</code> to your project root for full TypeScript support.
@@ -86,11 +103,6 @@ const techStack = ['REACT', 'VITE', 'TYPESCRIPT', 'CSS MODULES', 'NEXT.JS', 'REM
     </div>
   </div>
 
-  <div className={styles.logoCloud}>
-    {techStack.map((t) => (
-      <span key={t} className={styles.techName}>{t}</span>
-    ))}
-  </div>
 </section>
 </template>
 
@@ -196,7 +208,7 @@ const techStack = ['REACT', 'VITE', 'TYPESCRIPT', 'CSS MODULES', 'NEXT.JS', 'REM
 .codePrimary {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;
-  color: var(--primary);
+  color: var(--text-muted);
   white-space: pre;
   overflow-x: auto;
   flex: 1;
@@ -205,7 +217,7 @@ const techStack = ['REACT', 'VITE', 'TYPESCRIPT', 'CSS MODULES', 'NEXT.JS', 'REM
 .codeSecondary {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;
-  color: var(--secondary);
+  color: var(--text-muted);
   white-space: pre;
   overflow-x: auto;
   flex: 1;
@@ -279,7 +291,7 @@ const techStack = ['REACT', 'VITE', 'TYPESCRIPT', 'CSS MODULES', 'NEXT.JS', 'REM
   font-size: 0.75rem;
 }
 
-.lineText { color: var(--text-muted); }
+.lineText { color: var(--text-muted); white-space: pre; }
 
 .cardNote {
   color: var(--text-muted);
@@ -296,27 +308,6 @@ const techStack = ['REACT', 'VITE', 'TYPESCRIPT', 'CSS MODULES', 'NEXT.JS', 'REM
   font-size: 0.9em;
 }
 
-/* ─── Logo cloud ─── */
-
-.logoCloud {
-  max-width: 1440px;
-  margin: 4rem auto 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 3rem;
-  opacity: 0.35;
-  filter: grayscale(1);
-}
-
-.techName {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--text);
-}
 
 @media (max-width: 900px) {
   .grid { grid-template-columns: 1fr; gap: 2rem; }

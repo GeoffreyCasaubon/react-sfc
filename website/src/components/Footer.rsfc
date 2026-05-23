@@ -44,7 +44,7 @@
         </li>
         <li>
           <a
-            href="https://marketplace.visualstudio.com/items?itemName=g-casau.rsfc"
+            href="https://github.com/GeoffreyCasaubon/react-sfc/releases/tag/v0.2.0-vscode"
             target="_blank"
             rel="noreferrer"
             className={styles.colLink}

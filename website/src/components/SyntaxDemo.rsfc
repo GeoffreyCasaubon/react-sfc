@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useState } from 'react'
+import { highlightLine } from '../lib/highlight'
 
 const [active, setActive] = useState<'script' | 'template' | 'style'>('script')
 
@@ -56,6 +57,7 @@ const blocks = {
 }
 
 const tabs = (['script', 'template', 'style'] as const)
+const langMap = { script: 'typescript', template: 'tsx', style: 'css' } as const
 </script>
 
 <template>
@@ -95,7 +97,10 @@ const tabs = (['script', 'template', 'style'] as const)
         {blocks[active].lines.map((line, i) => (
           <div key={i} className={styles.codeLine}>
             <span className={styles.lineNum}>{i + 1}</span>
-            <span className={styles.lineText}>{line || ' '}</span>
+            <span
+              className={styles.lineText}
+              dangerouslySetInnerHTML={{ __html: highlightLine(line, langMap[active]) }}
+            />
           </div>
         ))}
       </div>
@@ -251,5 +256,5 @@ const tabs = (['script', 'template', 'style'] as const)
   font-size: 0.78rem;
 }
 
-.lineText { color: var(--text-muted); }
+.lineText { color: var(--text-muted); white-space: pre; }
 </style>
