@@ -30,6 +30,7 @@
   "bugs": {
     "url": "https://github.com/geoffreycasaubon/react-sfc/issues"
   },
+  "icon": "images/logo.svg",
   "homepage": "https://github.com/geoffreycasaubon/react-sfc#readme",
   "activationEvents": [
     "onLanguage:rsfc"
