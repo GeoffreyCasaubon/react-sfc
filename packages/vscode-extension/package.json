@@ -2,7 +2,7 @@
   "name": "rsfc",
   "displayName": "RSFC - React Single File Components",
   "description": "Syntax highlighting, IntelliSense, diagnostics, and snippets for .rsfc files",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "publisher": "g-casau",
   "license": "MIT",
