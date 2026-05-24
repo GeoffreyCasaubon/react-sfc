@@ -30,7 +30,7 @@ const toc = [
     <div className={styles.navInner}>
       <div className={styles.navLeft}>
         <Link to="/" className={styles.logo} aria-label="RSFC Home">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="32" height="32" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="36" height="36" aria-hidden="true">
             <g transform="translate(256,256)">
               <ellipse rx="155" ry="62" transform="rotate(0)" fill="none" stroke="#3EC99E" strokeWidth="14" strokeLinecap="round"/>
               <ellipse rx="155" ry="62" transform="rotate(60)" fill="none" stroke="#3EC99E" strokeWidth="14" strokeLinecap="round"/>
@@ -102,14 +102,14 @@ const toc = [
   top: 0;
   width: 100%;
   z-index: 50;
-  background: rgba(10, 10, 11, 0.9);
+  background: rgba(10, 10, 11, 0.82);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
 
 .navInner {
-  max-width: 1100px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 0 1.5rem;
   height: 64px;
