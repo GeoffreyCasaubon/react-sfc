@@ -4,9 +4,16 @@ node_modules/
 
 # Build outputs
 dist/
+dist-ssr/
 .next/
 out/
 build/
+
+# VS Code extension packages
+*.vsix
+
+# Ruflo / Claude Flow runtime
+.swarm/
 
 # Type declaration cache
 *.tsbuildinfo
