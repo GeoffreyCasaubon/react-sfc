@@ -1,0 +1,36 @@
+<script lang="ts">
+import { highlightLine } from '../../lib/highlight'
+import type { HighlightLang } from '../../lib/highlight'
+
+interface CodeBlockProps {
+  label: string
+  lang: HighlightLang
+  lines: string[]
+}
+
+export default function CodeBlock({ label, lang, lines }: CodeBlockProps) {
+  return (
+    <div className={styles.wrap}>
+      <div className={styles.header}><span className={styles.label}>{label}</span></div>
+      <div className={styles.body}>
+        {lines.map((line, i) => (
+          <div key={i} className={styles.line}>
+            <span className={styles.num}>{i + 1}</span>
+            <span className={styles.text} dangerouslySetInnerHTML={{ __html: highlightLine(line, lang) }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+</script>
+
+<style module>
+.wrap { border-radius: 6px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 1rem; }
+.header { background: var(--surface-3); border-bottom: 1px solid var(--border); padding: 0.4rem 1rem; }
+.label { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted); }
+.body { padding: 1rem 1.25rem; background: var(--surface-0); font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.75; overflow-x: auto; }
+.line { display: flex; gap: 1.25rem; }
+.num { color: var(--outline); text-align: right; min-width: 1.25rem; flex-shrink: 0; user-select: none; font-size: 0.78rem; }
+.text { color: var(--text-muted); white-space: pre; }
+</style>

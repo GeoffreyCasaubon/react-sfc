@@ -2,15 +2,20 @@
   "name": "@g-casau/rsfc-website",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && vite build --config vite.ssr.config.mjs && node scripts/prerender.mjs",
+    "build:client": "vite build",
+    "build:ssr": "vite build --config vite.ssr.config.mjs",
+    "prerender": "node scripts/prerender.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
     "prismjs": "^1.30.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-router-dom": "^7.15.1"
   },
   "devDependencies": {
     "@g-casau/rsfc-vite-plugin": "workspace:*",

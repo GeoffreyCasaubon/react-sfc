@@ -1,0 +1,47 @@
+<script setup lang="ts">
+import s from '../../styles/docs.module.css'
+import CodeBlock from '../../components/docs/CodeBlock.rsfc'
+
+const lines = [
+  `rsfc({`,
+  `  include: ['**/*.rsfc'],        // default`,
+  `  exclude: ['node_modules/**'],  // default`,
+  `  customBlockTransforms: {`,
+  `    graphql: (block) => \`export const QUERY = \\\`\${block.content}\\\`\`,`,
+  `    i18n:    (block, id) => \`export const messages = \${block.content}\`,`,
+  `  },`,
+  `})`,
+]
+</script>
+
+<template>
+<section className={s.section} id="plugin-options">
+  <h2 className={s.h2}>Plugin Options</h2>
+  <div className={s.tableWrap}>
+    <table className={s.table}>
+      <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code className={s.code}>include</code></td>
+          <td><code className={s.code}>string[]</code></td>
+          <td><code className={s.code}>['**/*.rsfc']</code></td>
+          <td>Glob patterns of files to transform</td>
+        </tr>
+        <tr>
+          <td><code className={s.code}>exclude</code></td>
+          <td><code className={s.code}>string[]</code></td>
+          <td><code className={s.code}>['node_modules/**']</code></td>
+          <td>Glob patterns of files to skip</td>
+        </tr>
+        <tr>
+          <td><code className={s.code}>customBlockTransforms</code></td>
+          <td><code className={s.code}>{'Record<string, Function>'}</code></td>
+          <td>—</td>
+          <td>Transform custom blocks to JavaScript by tag name</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <CodeBlock label="vite.config.ts" lang="typescript" lines={lines} />
+</section>
+</template>

@@ -1,0 +1,32 @@
+<script setup lang="ts">
+import s from '../../styles/docs.module.css'
+import CodeBlock from '../../components/docs/CodeBlock.rsfc'
+
+const lines = [
+  `# compile to standalone JavaScript`,
+  `rsfc compile src/App.rsfc`,
+  `rsfc compile src/App.rsfc -o dist/App.js`,
+  ``,
+  `# parse to JSON descriptor`,
+  `rsfc parse src/App.rsfc`,
+  `rsfc parse src/App.rsfc | jq '.docs'`,
+]
+</script>
+
+<template>
+<section className={s.section} id="cli">
+  <h2 className={s.h2}>CLI</h2>
+  <p className={s.p}>Compile or inspect any <code className={s.code}>.rsfc</code> file without a bundler:</p>
+  <CodeBlock label="bash" lang="bash" lines={lines} />
+  <div className={s.tableWrap}>
+    <table className={s.table}>
+      <thead><tr><th>Command</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code className={s.code}>rsfc compile {'<file>'}</code></td><td>Compile .rsfc to JavaScript (stdout)</td></tr>
+        <tr><td><code className={s.code}>rsfc compile {'<file>'} -o {'<out>'}</code></td><td>Compile and write to file</td></tr>
+        <tr><td><code className={s.code}>rsfc parse {'<file>'}</code></td><td>Parse and emit JSON descriptor (stdout)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+</template>

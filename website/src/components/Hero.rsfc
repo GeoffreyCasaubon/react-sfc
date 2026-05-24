@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { highlightLine } from '../lib/highlight'
 
 const [activeTab, setActiveTab] = useState<'rsfc' | 'config'>('rsfc')
@@ -63,10 +64,11 @@ const tabs = {
           <span className={styles.logoText}>RSFC</span>
         </a>
         <div className={styles.navLinks}>
-          <a href="#features" className={styles.navLinkActive}>Features</a>
+          <a href="#features" className={styles.navLink}>Features</a>
           <a href="#syntax" className={styles.navLink}>Examples</a>
           <a href="#get-started" className={styles.navLink}>Get Started</a>
           <a href="#editor" className={styles.navLink}>VS Code</a>
+          <Link to="/docs" className={styles.navLink}>Docs</Link>
         </div>
       </div>
       <div className={styles.navRight}>

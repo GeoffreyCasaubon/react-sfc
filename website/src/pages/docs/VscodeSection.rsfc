@@ -1,0 +1,19 @@
+<script setup lang="ts">
+import s from '../../styles/docs.module.css'
+</script>
+
+<template>
+<section className={s.section} id="vscode">
+  <h2 className={s.h2}>VS Code Extension</h2>
+  <p className={s.p}>Install the RSFC extension for syntax highlighting, IntelliSense, and CSS Module autocompletion.</p>
+  <a
+    href="https://github.com/GeoffreyCasaubon/react-sfc/releases/tag/v0.2.0-vscode"
+    target="_blank"
+    rel="noreferrer"
+    className={s.vsixBtn}
+  >
+    Download .vsix from GitHub Releases
+  </a>
+  <p className={s.p}>Install via <em>Extensions → Install from VSIX…</em> in VS Code.</p>
+</section>
+</template>

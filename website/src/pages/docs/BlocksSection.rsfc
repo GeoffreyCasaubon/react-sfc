@@ -1,0 +1,25 @@
+<script setup lang="ts">
+import s from '../../styles/docs.module.css'
+</script>
+
+<template>
+<section className={s.section} id="blocks">
+  <h2 className={s.h2}>Blocks</h2>
+  <div className={s.tableWrap}>
+    <table className={s.table}>
+      <thead><tr><th>Block</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code className={s.code}>{'<script setup lang="ts">'}</code></td><td>Shorthand — imports hoisted, code runs in component scope, default export generated automatically</td></tr>
+        <tr><td><code className={s.code}>{'<script lang="ts">'}</code></td><td>Full control — write and export the component function yourself</td></tr>
+        <tr><td><code className={s.code}>{'<template>'}</code></td><td>JSX returned by the component. <code className={s.code}>styles</code> is in scope automatically when a <code className={s.code}>{'<style module>'}</code> block is present</td></tr>
+        <tr><td><code className={s.code}>{'<style module>'}</code></td><td>CSS Modules — class names are hashed, <code className={s.code}>styles.*</code> injected into scope</td></tr>
+        <tr><td><code className={s.code}>{'<style scoped>'}</code></td><td>Scoped via a unique <code className={s.code}>data-v-*</code> attribute — no class renaming</td></tr>
+        <tr><td><code className={s.code}>{'<style lang="scss">'}</code></td><td>Preprocessor support (Sass, Less, Stylus)</td></tr>
+        <tr><td><code className={s.code}>{'<clientScript>'}</code></td><td>Browser-only code, skipped during SSR</td></tr>
+        <tr><td><code className={s.code}>{'<docs>'}</code></td><td>Embedded Markdown documentation, readable via <code className={s.code}>parseFile()</code></td></tr>
+        <tr><td><code className={s.code}>{'<anything>'}</code></td><td>Custom blocks — handle via <code className={s.code}>customBlockTransforms</code> in the plugin</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+</template>

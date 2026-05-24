@@ -1,0 +1,58 @@
+<script setup lang="ts">
+import s from '../../styles/docs.module.css'
+import CodeBlock from '../../components/docs/CodeBlock.rsfc'
+
+const viteInstall = ['npm install -D @g-casau/rsfc-vite-plugin @vitejs/plugin-react']
+
+const viteConfig = [
+  `import { defineConfig } from 'vite'`,
+  `import react from '@vitejs/plugin-react'`,
+  `import rsfc from '@g-casau/rsfc-vite-plugin'`,
+  ``,
+  `export default defineConfig({ plugins: [rsfc(), react()] })`,
+]
+
+const nextInstall = ['npm install -D @g-casau/rsfc-webpack-loader']
+
+const nextConfig = [
+  `const nextConfig = {`,
+  `  webpack(config) {`,
+  `    config.module.rules.push({`,
+  `      test: /\\.rsfc$/,`,
+  `      use: [`,
+  `        { loader: 'babel-loader', options: { presets: [['@babel/preset-react', { runtime: 'automatic' }], '@babel/preset-typescript'] } },`,
+  `        { loader: '@g-casau/rsfc-webpack-loader' },`,
+  `      ],`,
+  `    })`,
+  `    return config`,
+  `  },`,
+  `}`,
+  `export default nextConfig`,
+]
+
+const tsDecl = [
+  `declare module '*.rsfc' {`,
+  `  import type { FC } from 'react'`,
+  `  const Component: FC`,
+  `  export default Component`,
+  `}`,
+]
+</script>
+
+<template>
+<section className={s.section} id="quick-start">
+  <h2 className={s.h2}>Quick Start</h2>
+
+  <h3 className={s.h3}>Vite</h3>
+  <CodeBlock label="bash" lang="bash" lines={viteInstall} />
+  <CodeBlock label="vite.config.ts" lang="typescript" lines={viteConfig} />
+
+  <h3 className={s.h3}>Next.js</h3>
+  <CodeBlock label="bash" lang="bash" lines={nextInstall} />
+  <CodeBlock label="next.config.ts" lang="typescript" lines={nextConfig} />
+
+  <h3 className={s.h3}>TypeScript</h3>
+  <p className={s.p}>Add a declaration file so TypeScript recognises <code className={s.code}>.rsfc</code> imports:</p>
+  <CodeBlock label="rsfc.d.ts" lang="typescript" lines={tsDecl} />
+</section>
+</template>

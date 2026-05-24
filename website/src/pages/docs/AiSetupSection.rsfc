@@ -1,0 +1,48 @@
+<script setup lang="ts">
+import s from '../../styles/docs.module.css'
+import CodeBlock from '../../components/docs/CodeBlock.rsfc'
+
+const L = '</'.replace('/', '')
+const S = '</'
+
+const lines = [
+  `# RSFC — React Single File Components`,
+  ``,
+  `## Format`,
+  ``,
+  `Files use the \`.rsfc\` extension with Vue-like blocks:`,
+  ``,
+  `- \`${L}script setup lang="ts">\` — shorthand, imports hoisted, code in component scope`,
+  `- \`${L}script lang="ts">\` — explicit, write the full function yourself`,
+  `- \`${L}template>\` — JSX; \`styles\` auto-injected with \`${L}style module>\``,
+  `- \`${L}style module>\` — CSS Modules, \`styles.*\` in scope`,
+  `- \`${L}style scoped>\` — scoped via \`data-v-*\` attribute`,
+  `- \`${L}clientScript>\` — browser-only, skipped during SSR`,
+  `- \`${L}docs>\` — embedded Markdown, readable via \`parseFile()\``,
+  ``,
+  `## Example`,
+  ``,
+  `\`\`\`rsfc`,
+  `${L}script setup lang="ts">`,
+  `import { useState } from 'react'`,
+  `const [count, setCount] = useState(0)`,
+  `${S}script>`,
+  ``,
+  `${L}template>`,
+  `  <button onClick={() => setCount(count + 1)}>{count}${S}button>`,
+  `${S}template>`,
+  ``,
+  `${L}style module>`,
+  `button { background: #42b883; color: #003823; }`,
+  `${S}style>`,
+  `\`\`\``,
+]
+</script>
+
+<template>
+<section className={s.section} id="ai-setup">
+  <h2 className={s.h2}>AI Setup</h2>
+  <p className={s.p}>Add RSFC context to your AI editor so it understands the format and generates correct files. Copy this snippet into your <code className={s.code}>CLAUDE.md</code>, <code className={s.code}>.github/copilot-instructions.md</code>, or <code className={s.code}>.cursorrules</code>:</p>
+  <CodeBlock label="CLAUDE.md / copilot-instructions.md" lang="bash" lines={lines} />
+</section>
+</template>

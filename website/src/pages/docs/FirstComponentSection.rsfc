@@ -1,0 +1,38 @@
+<script setup lang="ts">
+import s from '../../styles/docs.module.css'
+import CodeBlock from '../../components/docs/CodeBlock.rsfc'
+
+const L = '</'.replace('/', '')
+const S = '</'
+
+const lines = [
+  `${L}script setup lang="ts">`,
+  `import { useState } from 'react'`,
+  ``,
+  `const [count, setCount] = useState(0)`,
+  `const double = count * 2`,
+  `${S}script>`,
+  ``,
+  `${L}template>`,
+  `<div className={styles.card}>`,
+  `  <p>{count} × 2 = {double}</p>`,
+  `  <button className={styles.btn} onClick={() => setCount(count + 1)}>`,
+  `    Increment`,
+  `  ${S}button>`,
+  `${S}div>`,
+  `${S}template>`,
+  ``,
+  `${L}style module>`,
+  `.card { padding: 2rem; border-radius: 8px; background: #1b211d; }`,
+  `.btn  { background: #42b883; color: #003823; border: none; cursor: pointer; }`,
+  `${S}style>`,
+]
+</script>
+
+<template>
+<section className={s.section} id="first-component">
+  <h2 className={s.h2}>Your First Component</h2>
+  <p className={s.p}>A counter with state, a CSS Module, and auto-scoped styles — all in one file. The <code className={s.code}>styles</code> object is injected automatically when a <code className={s.code}>{'<style module>'}</code> block is present.</p>
+  <CodeBlock label="Counter.rsfc" lang="tsx" lines={lines} />
+</section>
+</template>

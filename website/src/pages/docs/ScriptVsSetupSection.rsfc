@@ -1,0 +1,40 @@
+<script setup lang="ts">
+import s from '../../styles/docs.module.css'
+import CodeBlock from '../../components/docs/CodeBlock.rsfc'
+
+const L = '</'.replace('/', '')
+const S = '</'
+
+const scriptSetupLines = [
+  `${L}script setup lang="ts">`,
+  `import { useState } from 'react'`,
+  `const [count, setCount] = useState(0)`,
+  `${S}script>`,
+  ``,
+  `${L}template>`,
+  `  <button onClick={() => setCount(count + 1)}>{count}${S}button>`,
+  `${S}template>`,
+]
+
+const scriptExplicitLines = [
+  `${L}script lang="ts">`,
+  `import { useState } from 'react'`,
+  ``,
+  `export default function Counter() {`,
+  `  const [count, setCount] = useState(0)`,
+  `  return <button onClick={() => setCount(count + 1)}>{count}${S}button>`,
+  `}`,
+  `${S}script>`,
+]
+</script>
+
+<template>
+<section className={s.section} id="script-vs-setup">
+  <h2 className={s.h2}>script vs script setup</h2>
+  <p className={s.p}><code className={s.code}>{'<script setup>'}</code> is the shorthand: variables are in scope and the default export is generated for you. <code className={s.code}>{'<script>'}</code> gives full control — write and export the function yourself.</p>
+  <div className={s.compareGrid}>
+    <CodeBlock label="script setup (shorthand)" lang="tsx" lines={scriptSetupLines} />
+    <CodeBlock label="script (explicit)" lang="tsx" lines={scriptExplicitLines} />
+  </div>
+</section>
+</template>

@@ -1,0 +1,20 @@
+<script setup lang="ts">
+import s from '../../styles/docs.module.css'
+</script>
+
+<template>
+<section className={s.section} id="packages">
+  <h2 className={s.h2}>Packages</h2>
+  <div className={s.tableWrap}>
+    <table className={s.table}>
+      <thead><tr><th>Package</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code className={s.code}>@g-casau/rsfc-vite-plugin</code></td><td>Vite plugin</td></tr>
+        <tr><td><code className={s.code}>@g-casau/rsfc-webpack-loader</code></td><td>Webpack / Next.js loader</td></tr>
+        <tr><td><code className={s.code}>@g-casau/rsfc-core</code></td><td>Parser + generator — zero runtime deps</td></tr>
+        <tr><td><code className={s.code}>@g-casau/rsfc-cli</code></td><td>CLI (<code className={s.code}>rsfc compile</code>, <code className={s.code}>rsfc parse</code>)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+</template>
