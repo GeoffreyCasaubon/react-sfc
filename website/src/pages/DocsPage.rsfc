@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Footer from '../components/Footer.rsfc'
 import FirstComponentSection from './docs/FirstComponentSection.rsfc'
@@ -22,6 +23,24 @@ const toc = [
   { href: '#vscode',          label: 'VS Code' },
   { href: '#ai-setup',        label: 'AI Setup' },
 ]
+
+const [activeId, setActiveId] = useState('')
+
+useEffect(() => {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) setActiveId(entry.target.id)
+      }
+    },
+    { rootMargin: '0px 0px -80% 0px', threshold: 0 }
+  )
+  toc.forEach(({ href }) => {
+    const el = document.getElementById(href.slice(1))
+    if (el) observer.observe(el)
+  })
+  return () => observer.disconnect()
+}, [])
 </script>
 
 <template>
@@ -71,7 +90,10 @@ const toc = [
         <ul className={styles.toc}>
           {toc.map(item => (
             <li key={item.href}>
-              <a href={item.href} className={styles.tocLink}>{item.label}</a>
+              <a
+                href={item.href}
+                className={activeId === item.href.slice(1) ? styles.tocLinkActive : styles.tocLink}
+              >{item.label}</a>
             </li>
           ))}
         </ul>
@@ -188,17 +210,28 @@ const toc = [
 
 .toc { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 
-.tocLink {
+.tocLink, .tocLinkActive {
   display: block;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
-  color: var(--text-muted);
   padding: 0.3rem 0.5rem;
   border-radius: 3px;
   text-decoration: none;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  border-left: 2px solid transparent;
+}
+
+.tocLink {
+  color: var(--text-muted);
 }
 .tocLink:hover { color: var(--text); background: var(--surface-1); }
+
+.tocLinkActive {
+  color: var(--primary-bright);
+  background: rgba(62, 201, 158, 0.07);
+  border-left-color: var(--primary-bright);
+  padding-left: calc(0.5rem - 2px);
+}
 
 .pageHeader {
   margin-bottom: 4rem;
